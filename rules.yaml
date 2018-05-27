@@ -1,0 +1,6 @@
+#Rule 1
+filetype: [".*"]
+filetype_weight: 3
+grep_words: ["aws_secret_access_key"]
+grep_word_occurrence: 1
+grep_words_weight: 7

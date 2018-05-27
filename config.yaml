@@ -1,0 +1,11 @@
+logfile: './errors.log'
+base64_chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+archive_types: ['.zip', '.tar.gz', '.tgz', '.tar.bz2', '.tbz']
+excluded: [
+        '.jpg', '.jpeg', '.png', '.gif', '.svg',
+        '.mp4', '.mp3', '.webm',
+        '.ttf', '.woff', '.eot',
+        '.css', '.DS_Store',
+        '.pdf']
+min_key_length: 40
+max_key_length: 40
