@@ -68,7 +68,7 @@ The future of this project depends on you! I released it with just a basic funct
 
 ### Contribution
 
-Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky] (https://twitter.com/Rzepsky) or drop me a message at pawel.rzepa@outlook.com and I would be more than happy to see here any contributors!
+Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky](https://twitter.com/Rzepsky) or drop me a message at pawel.rzepa@outlook.com and I would be more than happy to see here any contributors!
 
 
 ### License
