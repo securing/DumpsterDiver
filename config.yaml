@@ -7,5 +7,5 @@ excluded: [
         '.ttf', '.woff', '.eot',
         '.css', '.DS_Store',
         '.pdf']
-min_key_length: 40
-max_key_length: 40
+min_key_length: 20
+max_key_length: 80
