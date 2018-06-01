@@ -1,8 +1,8 @@
 DumpsterDiver (by @Rzepsky)
 ========================================
 
-DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secret keys (e.g. AWS Access Key, Azure Share Key or SSH keys). Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses). 
-The main idea of this tool is to detect any potential secret leaks.
+DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secret keys (e.g. AWS Access Key, Azure Share Key or SSH keys) based on counting the entropy. Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses). 
+The main idea of this tool is to detect any potential secret leaks. You can watch it in action in the [demo video](https://vimeo.com/272944858).
 
 ### Key features:
 * it uses Shannon Entropy to find private keys.
