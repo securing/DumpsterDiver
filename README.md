@@ -33,8 +33,8 @@ pip install -r requirements.txt
 There is no single tool which fits for everyone's needs and the DumpsterDiver is not an exception here. So, in `config.yaml` file you can custom the program to search exactly what you want. Below you can find a description of each setting.
 
 * `logfile` - specifies a file where logs should be saved.
-* `excluded` - specifies file extensions which you don't want to omit during a scan. There is no point in searching for hardcoded secrets in picture or video files, right?
-* `min_key_length` and `min_key_length` - specifies minimum and maximum length of the secret you're looking for. Depending on your needs this setting can greatly limit the amount of false positives. For example, the AWS secret has a length of 40 bytes so if you set `min_key_length` and `min_key_length` to 40 then the DumpsterDiver will analyze only 40 bytes strings. However, it won't take into account longer strings like Azure shared key or private SSH key.
+* `excluded` - specifies file extensions which you want to omit during a scan. There is no point in searching for hardcoded secrets in picture or video files, right?
+* `min_key_length` and `max_key_length` - specifies minimum and maximum length of the secret you're looking for. Depending on your needs this setting can greatly limit the amount of false positives. For example, the AWS secret has a length of 40 bytes so if you set `min_key_length` and `max_key_length` to 40 then the DumpsterDiver will analyze only 40 bytes strings. However, it won't take into account longer strings like Azure shared key or private SSH key.
 
 ### Advanced search:
 The DumpsterDiver supports also an advanced search. Beyond a simple grepping with wildcards this tool allows you to create conditions. Let's assume you're searching for a leak of corporate emails. Additionaly, you're interested only in a big leaks, which contain at least 100 email addresses. For this purpose you should edit a 'rules.yaml' file in the following way:
