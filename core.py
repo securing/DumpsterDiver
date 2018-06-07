@@ -23,6 +23,7 @@ ADVANCED_SEARCH = False
 LOGFILE = CONFIG['logfile']
 MIN_KEY_LENGTH = CONFIG['min_key_length']
 MAX_KEY_LENGTH = CONFIG['max_key_length']
+HIGH_ENTROPY_EDGE = CONFIG['high_entropy_edge']
 
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG, 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -53,46 +54,46 @@ def mp_handler():
         job.terminate() 
 
 def worker():
-    file = queue.get()
-    analyzer(file)
+    _file = queue.get()
+    analyzer(_file)
     queue.task_done()
 
-def analyzer(file):
+def analyzer(_file):
     try:
         entropy_found = False
         rule_triggerred = False
 
         if ADVANCED_SEARCH: 
             additional_checks = advancedSearch.AdvancedSearch()
-            additional_checks.filetype_check(file)
+            additional_checks.filetype_check(_file)
 
-        for word in file_reader(file):
+        for word in file_reader(_file):
             base64_strings = get_strings(word)
 
             for string in base64_strings:
                 b64Entropy = shannon_entropy(string)
 
-                if b64Entropy > 4.3:
+                if b64Entropy > HIGH_ENTROPY_EDGE:
                     #print(string + 'has entropy ' + str(b64Entropy))
                     print(colored('FOUND HIGH ENTROPY!!!', 'green'))
-                    print(colored('The following string: ', 'green') + colored(string, 'magenta') + colored(' has been found in ' + file, 'green'))
-                    logger.info('high entropy has been found in a file ' + file)
+                    print(colored('The following string: ', 'green') + colored(string, 'magenta') + colored(' has been found in ' + _file, 'green'))
+                    logger.info('high entropy has been found in a file ' + _file)
                     entropy_found = True
 
             if ADVANCED_SEARCH:
                 additional_checks.grepper(word)
 
         if ADVANCED_SEARCH:
-            rule_triggerred = additional_checks.final(file)
+            rule_triggerred = additional_checks.final(_file)
 
-        if REMOVE_FLAG and not (entropy_found or rule_triggerred): remove_file(file)
+        if REMOVE_FLAG and not (entropy_found or rule_triggerred): remove_file(_file)
 
     except Exception as e:
-        logger.error('while trying to analyze ' + str(file) + '. Details:\n' + str(e))
+        logger.error('while trying to analyze ' + str(_file) + '. Details:\n' + str(e))
 
-def file_reader(file):
+def file_reader(_file):
     try:
-        with open(file, 'r', encoding = "ISO-8859-1") as f:
+        with open(_file, 'r', encoding = "ISO-8859-1") as f:
             while True:
                 buf = f.read(1024)
 
@@ -114,34 +115,34 @@ def file_reader(file):
             f.close()
 
     except Exception as e:
-        print(colored('Cannot read '+file,'red'))
-        log('while trying to read ' + str(file) + '. Details:\n' + str(e))
+        print(colored('Cannot read ' + _file,'red'))
+        log('while trying to read ' + str(_file) + '. Details:\n' + str(e))
 
 def folder_reader(path):
     try:
         for root, subfolder, files in os.walk(path):
             for filename in files:               
                 extension = os.path.splitext(filename)[1]
-                file = root + '/' + filename
+                _file = root + '/' + filename
 
                 #check if it is archive
                 if extension in EXCLUDED:
 
                     # remove unnecesarry files
                     if REMOVE_FLAG:
-                        file = root + '/' + filename
-                        remove_file(file)
+                        _file = root + '/' + filename
+                        remove_file(_file)
 
                 elif extension in ARCHIVE_TYPES:
                     archive = root + '/' + filename
                     folder_reader(extract_archive(archive))
 
-                elif extension == '' and ('.git/objects/' in file):
+                elif extension == '' and ('.git/objects/' in _file):
                     try:
-                        with open(file, 'rb') as f:
+                        with open(_file, 'rb') as f:
                             # reading 16 magic bits to recognize VAX COFF
                             if f.read(2) == b'x\x01':
-                                decompressed = git_object_reader(file)
+                                decompressed = git_object_reader(_file)
 
                                 if decompressed:
                                     queue.put(decompressed)
@@ -152,14 +153,14 @@ def folder_reader(path):
                         logger.error(e)
 
                 else:
-                    queue.put(file)
+                    queue.put(_file)
 
     except Exception as e:
         logger.error(e)
 
-def remove_file(file):
+def remove_file(_file):
     try:
-        os.remove(file)
+        os.remove(_file)
 
     except Exception as e: 
         logger.error(e)
@@ -183,14 +184,14 @@ def extract_archive(archive):
         extracted_folder = cwd + '/Extracted_files/' + str(time.time())
         os.makedirs(extracted_folder)
         os.chdir(extracted_folder)
-        file = opener(archive, mode)
-        try: file.extractall()
+        _file = opener(archive, mode)
+        try: _file.extractall()
 
         except Exception as e:
             print(colored('Cannot unpack ' + archive + ' archive', 'red'))
             logger.error(e)
 
-        finally: file.close()
+        finally: _file.close()
 
     except Exception as e:
         logger.error(e)
@@ -251,11 +252,11 @@ def get_strings(word):
     except Exception as e:
         logger.error(e)
 
-def git_object_reader(file):
+def git_object_reader(_file):
     try:
-        git_object = open(file, 'rb').read()
+        git_object = open(_file, 'rb').read()
         decompressed = zlib.decompress(git_object)
-        new_file = file + '_decompressed'
+        new_file = _file + '_decompressed'
 
         with open(new_file, 'w') as decompressed_file:
             decompressed_file.write(str(decompressed))
