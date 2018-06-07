@@ -8,9 +8,6 @@ excluded: [
         '.css', '.DS_Store',
         '.pdf']
 min_key_length: 40
-<<<<<<< HEAD
 max_key_length: 60
 high_entropy_edge: 4.3
-=======
-max_key_length: 80
->>>>>>> 7608651da9d0e12c3a8eefd21db667792f6b57af
+
