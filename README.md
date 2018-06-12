@@ -1,7 +1,7 @@
 DumpsterDiver (by @Rzepsky)
 ========================================
 
-DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secret keys (e.g. AWS Access Key, Azure Share Key or SSH keys) based on counting the entropy. Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses). 
+DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secret keys (e.g. AWS Access Key, Azure Share Key or SSH keys) based on counting the entropy. Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses).
 The main idea of this tool is to detect any potential secret leaks. You can watch it in action in the [demo video](https://vimeo.com/272944858).
 
 ### Key features:
@@ -60,9 +60,18 @@ grep_word_occurrence: 1
 
 Note that the rule will be triggered only when the total weight (`filetype_weight + grep_words_weight`) is `>=10`.
 
+### Using Docker
+A docker image is available for DumpsterDiver. Run it using:
+```
+docker run -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
+```
+If you want to override one of the configuration files (**config.yaml** or **rules.yaml**):
+```
+docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rules.yaml:/rules.yaml -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
+```
 ### Future plans
 The future of this project depends on you! I released it with just a basic functionality. However, if I receive a positive feedback from you (give a star to this repo, write me on twitter or just drop a mail) then I'll work further on this project (I just don't want to sit on it, if there gonna 3 people use this tool... hope you understand it). Some features which can be added (of course, feel free to let me know what features you're missing):
-- create an AWS Lambda or Azure Functions 
+- create an AWS Lambda or Azure Functions
 - directly downloading files from URLS or storage providers (e.g. AWS, Azure, GCP, dropbox etc.)
 - scan specific file/archive types
 - add more advanced rules
