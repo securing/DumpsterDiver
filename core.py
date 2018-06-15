@@ -93,7 +93,7 @@ def analyzer(_file):
 
 def file_reader(_file):
     try:
-        with open(_file, 'r', encoding = "ISO-8859-1") as f:
+        with open(_file, 'r') as f:
             while True:
                 buf = f.read(1024)
 
