@@ -108,6 +108,11 @@ The future of this project depends on you! I released it with just a basic funct
 
 Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky](https://twitter.com/Rzepsky) or drop me a message at pawel.rzepa@outlook.com and I would be more than happy to see here any contributors!
 
+### Special thanks
+Here I'd like to thank so much all those who help develop this project:
+
+* [Stephen Sorriaux](https://github.com/StephenSorriaux)
+* [Andres Riancho](https://twitter.com/w3af)
 
 ### License
 
