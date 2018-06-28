@@ -1,21 +1,24 @@
 #!/bin/env python
 
-import yaml
+import advancedSearch
+import fnmatch
+import json
+import logging
 import multiprocessing
 import math
 import os
+import re
 import tarfile
-import zipfile
 import time
-import fnmatch
+import yaml
+import zipfile
 import zlib
-import logging
-import advancedSearch
 from termcolor import colored
 
 CONFIG = yaml.safe_load(open('config.yaml'))
 BASE64_CHARS = CONFIG['base64_chars']
 PATH = './'
+OUTFILE = ''
 ARCHIVE_TYPES = CONFIG['archive_types']
 EXCLUDED = CONFIG['excluded']
 REMOVE_FLAG = False
@@ -30,6 +33,7 @@ logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
 logger=logging.getLogger(__name__)
 
 queue = multiprocessing.Manager().Queue()
+result = multiprocessing.Manager().Queue()
 
 
 def log(msg, log_type='error'):
@@ -38,11 +42,13 @@ def log(msg, log_type='error'):
     elif log_type == 'info':
         logger.info(msg)
 
+
 def mp_handler():
     jobs = []
     #depending on your hardware the DumpsterDiver will use all available cores
     for i in range(multiprocessing.cpu_count()):
-        pro = [multiprocessing.Process(target=worker) for i in range(queue.qsize())]
+        pro = [multiprocessing.Process(target=worker) \
+              for i in range(queue.qsize())]
 
     for p in pro:
         p.daemon = True
@@ -53,10 +59,12 @@ def mp_handler():
         job.join() 
         job.terminate() 
 
+
 def worker():
     _file = queue.get()
     analyzer(_file)
     queue.task_done()
+
 
 def analyzer(_file):
     try:
@@ -66,7 +74,7 @@ def analyzer(_file):
         if ADVANCED_SEARCH: 
             additional_checks = advancedSearch.AdvancedSearch()
             additional_checks.filetype_check(_file)
-
+        
         for word in file_reader(_file):
             base64_strings = get_strings(word)
 
@@ -74,26 +82,47 @@ def analyzer(_file):
                 b64Entropy = shannon_entropy(string)
 
                 if b64Entropy > HIGH_ENTROPY_EDGE:
-                    #print(string + 'has entropy ' + str(b64Entropy))
                     print(colored('FOUND HIGH ENTROPY!!!', 'green'))
-                    print(colored('The following string: ', 'green') + colored(string, 'magenta') + colored(' has been found in ' + _file, 'green'))
-                    logger.info('high entropy has been found in a file ' + _file)
+                    print(colored('The following string: ', 'green')
+                          + colored(string, 'magenta') 
+                          + colored(' has been found in ' 
+                          + _file, 'green'))
+                    print()
+                    logger.info('high entropy has been found in a file ' \
+                                + _file)
+                    data = {"Finding": "High entropy", "File": _file,
+                            "Details": {'Entropy': b64Entropy,
+                            'String': string}}
+                    result.put(data)
                     entropy_found = True
 
             if ADVANCED_SEARCH:
                 additional_checks.grepper(word)
 
         if ADVANCED_SEARCH:
-            rule_triggerred = additional_checks.final(_file)
 
-        if REMOVE_FLAG and not (entropy_found or rule_triggerred): remove_file(_file)
+            if additional_checks.final(_file): 
+                data = {"Finding": "Advanced rule triggerred", "File": _file,
+                        "Details": {"filetype": additional_checks._FILETYPE,
+                        "filetype_weight": additional_checks._FILETYPE_WEIGHT,
+                        "grep_words": additional_checks._GREP_WORDS,
+                        "grep_word_occurrence": additional_checks._GREP_WORD_OCCURRENCE,
+                        "grep_words_weight": additional_checks._GREP_WORDS_WEIGHT}}
+                result.put(data)
+
+        if REMOVE_FLAG and not (entropy_found or rule_triggerred): 
+            remove_file(_file)
 
     except Exception as e:
-        logger.error('while trying to analyze ' + str(_file) + '. Details:\n' + str(e))
+        logger.error('while trying to analyze ' 
+                     + str(_file) 
+                     + '. Details:\n' 
+                     + str(e))
+
 
 def file_reader(_file):
     try:
-        with open(_file, 'r', encoding = "ISO-8859-1") as f:
+        with open(_file, 'r') as f:
             while True:
                 buf = f.read(1024)
 
@@ -116,7 +145,9 @@ def file_reader(_file):
 
     except Exception as e:
         print(colored('Cannot read ' + _file,'red'))
-        log('while trying to read ' + str(_file) + '. Details:\n' + str(e))
+        log('while trying to read ' 
+            + str(_file) + '. Details:\n' + str(e))
+
 
 def folder_reader(path):
     try:
@@ -126,7 +157,7 @@ def folder_reader(path):
                 _file = root + '/' + filename
 
                 #check if it is archive
-                if extension in EXCLUDED:
+                if (extension or filename) in EXCLUDED:
 
                     # remove unnecesarry files
                     if REMOVE_FLAG:
@@ -158,12 +189,14 @@ def folder_reader(path):
     except Exception as e:
         logger.error(e)
 
+
 def remove_file(_file):
     try:
         os.remove(_file)
 
     except Exception as e: 
         logger.error(e)
+
 
 def extract_archive(archive):
     try:
@@ -180,7 +213,8 @@ def extract_archive(archive):
             logger.info('Cannot open archive ' + archive)
 
         cwd = os.getcwd()
-        #in case one archive contains another archive with the same name I used epoch time as the name for each extracted archive
+        #in case one archive contains another archive with the same name 
+        #I used epoch time as the name for each extracted archive
         extracted_folder = cwd + '/Extracted_files/' + str(time.time())
         os.makedirs(extracted_folder)
         os.chdir(extracted_folder)
@@ -188,7 +222,8 @@ def extract_archive(archive):
         try: _file.extractall()
 
         except Exception as e:
-            print(colored('Cannot unpack ' + archive + ' archive', 'red'))
+            print(colored('Cannot unpack ' + archive + ' archive',
+                          'red'))
             logger.error(e)
 
         finally: _file.close()
@@ -200,14 +235,17 @@ def extract_archive(archive):
         os.chdir(cwd)
         return extracted_folder
 
+
 def start_the_hunt():
     folder_reader(PATH)    
     mp_handler()
+    save_output()
 
 
 def shannon_entropy(data):
     '''
-    Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
+    Borrowed from 
+    http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
     '''
     try:
         if not data:
@@ -225,6 +263,7 @@ def shannon_entropy(data):
     except Exception as e:
         logger.error(e)
 
+
 def get_strings(word):
     try:
         count = 0
@@ -238,19 +277,20 @@ def get_strings(word):
 
             else:
 
-                if MAX_KEY_LENGTH >= count >= MIN_KEY_LENGTH-1:
+                if MAX_KEY_LENGTH >= count >= MIN_KEY_LENGTH:
                     strings.append(letters)
 
                 letters = ''
                 count = 0
 
-        if MAX_KEY_LENGTH >= count >= MIN_KEY_LENGTH-1:
+        if MAX_KEY_LENGTH >= count >= MIN_KEY_LENGTH:
             strings.append(letters)
 
         return strings
 
     except Exception as e:
         logger.error(e)
+
 
 def git_object_reader(_file):
     try:
@@ -265,5 +305,22 @@ def git_object_reader(_file):
             
     except Exception as e:
         logger.error(e)
+
+
+def save_output():
+    try:
+        data = []
+
+        while not result.empty():
+            data.append(result.get())
+
+        with open(OUTFILE, 'w') as f:
+            json.dump(data, f)
+
+    except Exception as e:
+        logger.error('while trying to write to ' 
+                     + str(_file) 
+                     + ' file. Details:\n' 
+                     + str(e))
 
 
