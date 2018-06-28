@@ -4,9 +4,7 @@ import advancedSearch
 import core
 import os
 import sys
-import textwrap
 import argparse
-from argparse import ArgumentParser, RawTextHelpFormatter
 from termcolor import colored
 
 
