@@ -16,12 +16,13 @@ The main idea of this tool is to detect any potential secret leaks. You can watc
 usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a]
 ```
 
-### Command line options
+### Basic command line options
 
 
 * `-p LOCAL_PATH` - path to the folder containing files to be analyzed.
 * `-r, --remove` - when this flag is set, then files which don't contain any secret (or anything interesting if `-a` flag is set) will be removed.
 * `-a, --advance` - when this flag is set, then all files will be additionally analyzed using rules specified in 'rules.yaml' file.
+* `-o OUTFILE` -  output file in JSON format.
 
 ### Pre-requisites
 To run the DumpsterDiver you have to install python  libraries. You can do this by running the following command:
@@ -29,8 +30,43 @@ To run the DumpsterDiver you have to install python  libraries. You can do this 
 ```
 pip install -r requirements.txt
 ```
+### Customizing your search
+There is no single tool which fits for everyone's needs and the DumpsterDiver is not an exception here. There are 3 ways to customize your search:
+
+* using levels
+* using command line parameters
+* using `config.yaml` file
+
+#### Customization via levels
+By setting up  a level you can limit your findings (e.g. only to long keys, like SSH private keys) and in the same way limit the false positives. The level can be set from command line and below you cand find the detailed description of each choice:
+
+* `--level 0` - searches for short (20-40 bytes long) keys, e.g. AWS Access Key ID. 
+* `--level 1` - (default) searches for typical (40-70 bytes long) keys, e.g. AWS Secret Access Key or Azure Shared Key. 
+* `--level 2` - searches for long (1000-1800 bytes long) keys, e.g. SSH private key
+* `--level 3` - searches for any key (20-1800 bytes long), careful as it generates lots of false positives
+
+#### Customization via command line parameters
+
+* `--min-key MIN_KEY` - specifies the minimum key length to be analyzed (default is 20).
+* `--max-key MAX_KEY` - specifies the maximum key length to be analyzed (default is 80).
+* `--entropy ENTROPY` - specifies the edge of high entropy (default is 4.3).
+
+This way is quite helpful when you know what you're looking for. Here are few examples:
+
+* When you're looking for AWS Secret Access Key:
+
+`python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 40 --max-key 40 --entropy 4.3` 
+
+* When you're looking for Azure Shared Key:
+
+`python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 66 --max-key 66 --entropy 5.1`
+
+* When you're looking for SSH private key (by default RSA provate key is written in 76 bytes long strings):
+
+`python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 76 --max-key 76 --entropy 5.1`
+
 ### Understanding config.yaml file
-There is no single tool which fits for everyone's needs and the DumpsterDiver is not an exception here. So, in `config.yaml` file you can custom the program to search exactly what you want. Below you can find a description of each setting.
+In `config.yaml` file you can custom the program to search exactly what you want. Below you can find a description of each setting.
 
 * `logfile` - specifies a file where logs should be saved.
 * `excluded` - specifies file extensions which you don't want to omit during a scan. There is no point in searching for hardcoded secrets in picture or video files, right?
@@ -71,6 +107,8 @@ docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rul
 ```
 ### Future plans
 The future of this project depends on you! I released it with just a basic functionality. However, if I receive a positive feedback from you (give a star to this repo, write me on twitter or just drop a mail) then I'll work further on this project (I just don't want to sit on it, if there gonna 3 people use this tool... hope you understand it). Some features which can be added (of course, feel free to let me know what features you're missing):
+
+- create a module for searching passwords
 - create an AWS Lambda or Azure Functions
 - directly downloading files from URLS or storage providers (e.g. AWS, Azure, GCP, dropbox etc.)
 - scan specific file/archive types
@@ -80,6 +118,11 @@ The future of this project depends on you! I released it with just a basic funct
 
 Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky](https://twitter.com/Rzepsky) or drop me a message at pawel.rzepa@outlook.com and I would be more than happy to see here any contributors!
 
+### Special thanks
+Here I'd like to thank so much all those who help develop this project:
+
+* [Stephen Sorriaux](https://github.com/StephenSorriaux)
+* [Andres Riancho](https://twitter.com/w3af)
 
 ### License
 
