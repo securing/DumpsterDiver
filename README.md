@@ -106,6 +106,11 @@ Using entropy for finding passwords isn't very effective as it generates a lot o
 * `--max-pass MAX_PASS` - specifies the maximum password length to be analyzed (default is 12). Requires adding `'-s'` flag to the syntax.
 * `--pass-complex {1,2,3,4,5,6,7,8,9}` - specifies the edge of password complexity between 1 (trivial passwords) to 9 (very complex passwords) (default is 8). Requires adding `'-s'` flag to the syntax.
 
+For example if you want to find complex passwords (which contains uppercase, lowercase, special character, digit and is 10 to 15 characters long), then you can do it using the following command:
+```
+python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-pass 10 --max-pass 15 --pass-complex 8
+```
+
 ### Using Docker
 A docker image is available for DumpsterDiver. Run it using:
 ```
