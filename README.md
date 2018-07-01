@@ -31,6 +31,8 @@ To run the DumpsterDiver you have to install python  libraries. You can do this 
 ```
 pip install -r requirements.txt
 ```
+If you have installed separately Python 2 and 3 then you should use `pip3` or `pip3.6`.  
+
 ### Customizing your search
 There is no single tool which fits for everyone's needs and the DumpsterDiver is not an exception here. There are 3 ways to customize your search:
 
