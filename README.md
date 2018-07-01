@@ -22,6 +22,7 @@ usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a]
 * `-p LOCAL_PATH` - path to the folder containing files to be analyzed.
 * `-r, --remove` - when this flag is set, then files which don't contain any secret (or anything interesting if `-a` flag is set) will be removed.
 * `-a, --advance` - when this flag is set, then all files will be additionally analyzed using rules specified in 'rules.yaml' file.
+*  `-s, --secret` - when this flag is set, then all files will be additionally analyzed in search of hardcoded passwords.
 * `-o OUTFILE` -  output file in JSON format.
 
 ### Pre-requisites
