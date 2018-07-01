@@ -7,6 +7,7 @@ import logging
 import multiprocessing
 import math
 import os
+import passwordmeter
 import re
 import tarfile
 import time
@@ -27,6 +28,10 @@ LOGFILE = CONFIG['logfile']
 MIN_KEY_LENGTH = CONFIG['min_key_length']
 MAX_KEY_LENGTH = CONFIG['max_key_length']
 HIGH_ENTROPY_EDGE = CONFIG['high_entropy_edge']
+PASSWORD_SEARCH = False
+MIN_PASS_LENGTH = CONFIG['min_pass_length']
+MAX_PASS_LENGTH = CONFIG['max_pass_length']
+PASSWORD_COMPLEXITY = CONFIG['password_complexity']
 
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG, 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -82,17 +87,17 @@ def analyzer(_file):
                 b64Entropy = shannon_entropy(string)
 
                 if b64Entropy > HIGH_ENTROPY_EDGE:
-                    print(colored('FOUND HIGH ENTROPY!!!', 'green'))
-                    print(colored('The following string: ', 'green')
+                    print(colored("FOUND HIGH ENTROPY!!!", 'green'))
+                    print(colored("The following string: ", 'green')
                           + colored(string, 'magenta') 
-                          + colored(' has been found in ' 
+                          + colored(" has been found in " 
                           + _file, 'green'))
                     print()
-                    logger.info('high entropy has been found in a file ' \
+                    logger.info("high entropy has been found in a file " \
                                 + _file)
                     data = {"Finding": "High entropy", "File": _file,
-                            "Details": {'Entropy': b64Entropy,
-                            'String': string}}
+                            "Details": {"Entropy": b64Entropy,
+                            "String": string}}
                     result.put(data)
                     entropy_found = True
 
@@ -110,13 +115,30 @@ def analyzer(_file):
                         "grep_words_weight": additional_checks._GREP_WORDS_WEIGHT}}
                 result.put(data)
 
+        if PASSWORD_SEARCH:
+            #have to read line by line instead of words
+            try:
+                with open(_file) as f:
+                    for line in f:
+                        pass_list = password_search(line)
+                        if pass_list:
+                            for password in pass_list:
+                                print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
+                                print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta') + colored(" has been found in file " + _file, 'yellow'))
+                                data = {"Finding": "Password", "File": _file, "Details": {"Password complexity": password[1], "String": password[0]}}
+                                result.put(data)
+                                logger.info("potential password has been found in a file " + _file)
+
+            except Exception as e:
+                logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
+
         if REMOVE_FLAG and not (entropy_found or rule_triggerred): 
             remove_file(_file)
 
     except Exception as e:
-        logger.error('while trying to analyze ' 
+        logger.error("while trying to analyze " 
                      + str(_file) 
-                     + '. Details:\n' 
+                     + ". Details:\n" 
                      + str(e))
 
 
@@ -144,9 +166,9 @@ def file_reader(_file):
             f.close()
 
     except Exception as e:
-        print(colored('Cannot read ' + _file,'red'))
-        log('while trying to read ' 
-            + str(_file) + '. Details:\n' + str(e))
+        print(colored("Cannot read " + _file,'red'))
+        log("while trying to read " 
+            + str(_file) + ". Details:\n" + str(e))
 
 
 def folder_reader(path):
@@ -210,7 +232,7 @@ def extract_archive(archive):
             opener, mode = tarfile.open, 'r:bz2'
 
         else: 
-            logger.info('Cannot open archive ' + archive)
+            logger.info("Cannot open archive " + archive)
 
         cwd = os.getcwd()
         #in case one archive contains another archive with the same name 
@@ -222,7 +244,7 @@ def extract_archive(archive):
         try: _file.extractall()
 
         except Exception as e:
-            print(colored('Cannot unpack ' + archive + ' archive',
+            print(colored("Cannot unpack " + archive + " archive",
                           'red'))
             logger.error(e)
 
@@ -318,9 +340,28 @@ def save_output():
             json.dump(data, f)
 
     except Exception as e:
-        logger.error('while trying to write to ' 
+        logger.error("while trying to write to " 
                      + str(_file) 
-                     + ' file. Details:\n' 
+                     + " file. Details:\n" 
                      + str(e))
+
+def password_search(line):
+    try:
+
+        potential_pass_list = re.findall(r"['\">](.*?)['\"<]", line)
+        pass_list = []
+
+        for string in potential_pass_list:
+            password_complexity = passwordmeter.test(string)[0]
+
+            if (password_complexity >= PASSWORD_COMPLEXITY*0.1) and \
+                (not re.search(r"\s", string)) and \
+                (MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH):
+                pass_list.append((string, password_complexity))
+
+        return pass_list
+
+    except Exception as e:
+        logger.error(e)
 
 
