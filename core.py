@@ -348,7 +348,7 @@ def save_output():
 def password_search(line):
     try:
 
-        potential_pass_list = re.findall(r"['\"](.*?)['\"]", line)
+        potential_pass_list = re.findall(r"['\">](.*?)['\"<]", line)
         pass_list = []
 
         for string in potential_pass_list:
