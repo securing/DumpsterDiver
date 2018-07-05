@@ -1,7 +1,7 @@
 DumpsterDiver (by @Rzepsky)
 ========================================
 
-DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secret keys (e.g. AWS Access Key, Azure Share Key or SSH keys) based on counting the entropy. Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses).
+DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secrets like keys (e.g. AWS Access Key, Azure Share Key or SSH keys) or passwords. Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses).
 The main idea of this tool is to detect any potential secret leaks. You can watch it in action in the [demo video](https://vimeo.com/272944858).
 
 ### Key features:
@@ -9,6 +9,8 @@ The main idea of this tool is to detect any potential secret leaks. You can watc
 * it supports multiprocessing for analyzing files.
 * it unpacks compressed archives (e.g. zip, tar.gz etc.)
 * it supports advanced search using simple rules (details below)
+* it searches for hardcoded passwords
+* it is fully customizable
 
 ### Usage
 
@@ -123,7 +125,7 @@ docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rul
 ### Future plans
 The future of this project depends on you! I released it with just a basic functionality. However, if I receive a positive feedback from you (give a star to this repo, write me on twitter or just drop a mail) then I'll work further on this project (I just don't want to sit on it, if there gonna 3 people use this tool... hope you understand it). Some features which can be added (of course, feel free to let me know what features you're missing):
 
-- create a module for searching passwords
+- add more false positive filters
 - create an AWS Lambda or Azure Functions
 - directly downloading files from URLS or storage providers (e.g. AWS, Azure, GCP, dropbox etc.)
 - scan specific file/archive types
@@ -134,10 +136,11 @@ The future of this project depends on you! I released it with just a basic funct
 Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky](https://twitter.com/Rzepsky) or drop me a message at pawel.rzepa@outlook.com and I would be more than happy to see here any contributors!
 
 ### Special thanks
-Here I'd like to thank so much all those who help develop this project:
+Here I'd like to thank so much all those who helped develop this project:
 
 * [Stephen Sorriaux](https://github.com/StephenSorriaux)
 * [Andres Riancho](https://twitter.com/w3af)
+* [Damian Stygar](https://github.com/DahDev)
 
 ### License
 
