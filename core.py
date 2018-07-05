@@ -86,7 +86,7 @@ def analyzer(_file):
             for string in base64_strings:
                 b64Entropy = shannon_entropy(string)
 
-                if b64Entropy > HIGH_ENTROPY_EDGE:
+                if (b64Entropy > HIGH_ENTROPY_EDGE) and false_positive_filter(string):
                     print(colored("FOUND HIGH ENTROPY!!!", 'green'))
                     print(colored("The following string: ", 'green')
                           + colored(string, 'magenta') 
@@ -363,5 +363,22 @@ def password_search(line):
 
     except Exception as e:
         logger.error(e)
+
+def false_positive_filter(word):
+    try:
+
+        return all([digit_verifier(word),
+                    order_verifier(word)])
+
+    except Exception as e:
+        logger.error(e)
+
+def digit_verifier(word):
+
+    return any(char.isdigit() for char in word)
+
+def order_verifier(word):
+
+    if 'abcdefgh' not in word.lower(): return True
 
 
