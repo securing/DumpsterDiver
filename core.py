@@ -49,20 +49,13 @@ def log(msg, log_type='error'):
 
 
 def mp_handler():
-    jobs = []
-    #depending on your hardware the DumpsterDiver will use all available cores
-    for i in range(multiprocessing.cpu_count()):
-        pro = [multiprocessing.Process(target=worker) \
-              for i in range(queue.qsize())]
 
-    for p in pro:
-        p.daemon = True
-        p.start()
-        jobs.append(p)
-    
-    for job in jobs:
-        job.join() 
-        job.terminate() 
+    #depending on your hardware the DumpsterDiver will use all available cores for
+    #parallel processing 
+   
+    p = multiprocessing.Pool(multiprocessing.cpu_count()) 
+    while queue.qsize():
+        result = p.apply_async(worker, )
 
 
 def worker():
@@ -345,6 +338,7 @@ def save_output():
                      + " file. Details:\n" 
                      + str(e))
 
+
 def password_search(line):
     try:
 
@@ -364,6 +358,7 @@ def password_search(line):
     except Exception as e:
         logger.error(e)
 
+
 def false_positive_filter(word):
     try:
 
@@ -373,9 +368,11 @@ def false_positive_filter(word):
     except Exception as e:
         logger.error(e)
 
+
 def digit_verifier(word):
 
     return any(char.isdigit() for char in word)
+
 
 def order_verifier(word):
 
