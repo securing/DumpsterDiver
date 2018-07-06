@@ -15,7 +15,7 @@ The main idea of this tool is to detect any potential secret leaks. You can watc
 ### Usage
 
 ```
-usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a]
+usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-o]
 ```
 
 ### Basic command line options
