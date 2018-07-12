@@ -56,6 +56,13 @@ By setting up  a level you can limit your findings (e.g. only to long keys, like
 * `--max-key MAX_KEY` - specifies the maximum key length to be analyzed (default is 80).
 * `--entropy ENTROPY` - specifies the edge of high entropy (default is 4.3).
 
+There is also added a separate script which allows you to count an entropy of a character in a single word. It will help you to better customize the DumpsterDiver to your needs. You can check it using the following command:
+
+```
+$> python3 entropy.py f2441e3810794d37a34dd7f8f6995df4
+
+```
+
 This way is quite helpful when you know what you're looking for. Here are few examples:
 
 * When you're looking for AWS Secret Access Key:
@@ -76,12 +83,7 @@ In `config.yaml` file you can custom the program to search exactly what you want
 * `logfile` - specifies a file where logs should be saved.
 * `excluded` - specifies file extensions which you don't want to omit during a scan. There is no point in searching for hardcoded secrets in picture or video files, right?
 * `min_key_length` and `min_key_length` - specifies minimum and maximum length of the secret you're looking for. Depending on your needs this setting can greatly limit the amount of false positives. For example, the AWS secret has a length of 40 bytes so if you set `min_key_length` and `min_key_length` to 40 then the DumpsterDiver will analyze only 40 bytes strings. However, it won't take into account longer strings like Azure shared key or private SSH key. Default values are `min_key_length = 40` and `min_key_length = 80` what is quite general and can generate false positives.
-* `high_entropy_edge` - if the entropy of analyzed string equals or is higher than `high_entropy_edge`, then this string will be reported as a representation of high entropy. The default value `high_entropy_edge = 4.3` should work in most cases, however if you're getting too many false positives it is also worth trying increase this value. There is also added a separate script which allows you to count an entropy of a character in a single word. It will help you to better customize the DumpsterDiver to your needs. You can check it using the following command:
-
-```
-$> python3 entropy.py f2441e3810794d37a34dd7f8f6995df4
-
-```
+* `high_entropy_edge` - if the entropy of analyzed string equals or is higher than `high_entropy_edge`, then this string will be reported as a representation of high entropy. The default value `high_entropy_edge = 4.3` should work in most cases, however if you're getting too many false positives it is also worth trying increase this value. 
 
 ### Advanced search:
 The DumpsterDiver supports also an advanced search. Beyond a simple grepping with wildcards this tool allows you to create conditions. Let's assume you're searching for a leak of corporate emails. Additionaly, you're interested only in a big leaks, which contain at least 100 email addresses. For this purpose you should edit a 'rules.yaml' file in the following way:
