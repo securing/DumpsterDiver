@@ -31,7 +31,7 @@ usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-o]
 To run the DumpsterDiver you have to install python  libraries. You can do this by running the following command:
 
 ```
-pip install -r requirements.txt
+$> pip install -r requirements.txt
 ```
 If you have installed separately Python 2 and 3 then you should use `pip3` or `pip3.6`.  
 
@@ -60,15 +60,15 @@ This way is quite helpful when you know what you're looking for. Here are few ex
 
 * When you're looking for AWS Secret Access Key:
 
-`python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 40 --max-key 40 --entropy 4.3` 
+`$> python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 40 --max-key 40 --entropy 4.3` 
 
 * When you're looking for Azure Shared Key:
 
-`python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 66 --max-key 66 --entropy 5.1`
+`$> python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 66 --max-key 66 --entropy 5.1`
 
 * When you're looking for SSH private key (by default RSA provate key is written in 76 bytes long strings):
 
-`python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 76 --max-key 76 --entropy 5.1`
+`$> python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 76 --max-key 76 --entropy 5.1`
 
 ### Understanding config.yaml file
 In `config.yaml` file you can custom the program to search exactly what you want. Below you can find a description of each setting.
@@ -76,7 +76,12 @@ In `config.yaml` file you can custom the program to search exactly what you want
 * `logfile` - specifies a file where logs should be saved.
 * `excluded` - specifies file extensions which you don't want to omit during a scan. There is no point in searching for hardcoded secrets in picture or video files, right?
 * `min_key_length` and `min_key_length` - specifies minimum and maximum length of the secret you're looking for. Depending on your needs this setting can greatly limit the amount of false positives. For example, the AWS secret has a length of 40 bytes so if you set `min_key_length` and `min_key_length` to 40 then the DumpsterDiver will analyze only 40 bytes strings. However, it won't take into account longer strings like Azure shared key or private SSH key. Default values are `min_key_length = 40` and `min_key_length = 80` what is quite general and can generate false positives.
-* `high_entropy_edge` - if the entropy of analyzed string equals or is higher than `high_entropy_edge`, then this string will be reported as a representation of high entropy. The default value `high_entropy_edge = 4.3` should work in most cases, however if you're getting too many false positives it is also worth trying increase this value.
+* `high_entropy_edge` - if the entropy of analyzed string equals or is higher than `high_entropy_edge`, then this string will be reported as a representation of high entropy. The default value `high_entropy_edge = 4.3` should work in most cases, however if you're getting too many false positives it is also worth trying increase this value. There is also added a separate script which allows you to count an entropy of a character in a single word. It will help you to better customize the DumpsterDiver to your needs. You can check it using the following command:
+
+```
+$> python3 entropy.py f2441e3810794d37a34dd7f8f6995df4
+
+```
 
 ### Advanced search:
 The DumpsterDiver supports also an advanced search. Beyond a simple grepping with wildcards this tool allows you to create conditions. Let's assume you're searching for a leak of corporate emails. Additionaly, you're interested only in a big leaks, which contain at least 100 email addresses. For this purpose you should edit a 'rules.yaml' file in the following way:
@@ -110,17 +115,17 @@ Using entropy for finding passwords isn't very effective as it generates a lot o
 
 For example if you want to find complex passwords (which contains uppercase, lowercase, special character, digit and is 10 to 15 characters long), then you can do it using the following command:
 ```
-python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-pass 10 --max-pass 15 --pass-complex 8
+$> python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-pass 10 --max-pass 15 --pass-complex 8
 ```
 
 ### Using Docker
 A docker image is available for DumpsterDiver. Run it using:
 ```
-docker run -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
+$> docker run -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
 ```
 If you want to override one of the configuration files (**config.yaml** or **rules.yaml**):
 ```
-docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rules.yaml:/rules.yaml -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
+$> docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rules.yaml:/rules.yaml -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
 ```
 ### Future plans
 The future of this project depends on you! I released it with just a basic functionality. However, if I receive a positive feedback from you (give a star to this repo, write me on twitter or just drop a mail) then I'll work further on this project (I just don't want to sit on it, if there gonna 3 people use this tool... hope you understand it). Some features which can be added (of course, feel free to let me know what features you're missing):
