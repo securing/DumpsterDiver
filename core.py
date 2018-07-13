@@ -80,11 +80,9 @@ def analyzer(_file):
                 print(colored("FOUND HIGH ENTROPY!!!", 'green'))
                 print(colored("The following string: ", 'green')
                       + colored(word, 'magenta')
-                      + colored(" has been found in "
-                                + _file, 'green'))
+                      + colored(" has been found in " + _file, 'green'))
                 print()
-                logger.info("high entropy has been found in a file " \
-                            + _file)
+                logger.info("high entropy has been found in a file " + _file)
                 data = {"Finding": "High entropy", "File": _file,
                         "Details": {"Entropy": b64Entropy,
                                     "String": word}}
@@ -114,11 +112,12 @@ def analyzer(_file):
                         if pass_list:
                             for password in pass_list:
                                 print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
-                                print(colored("Potential password ", 'yellow') + colored(password[0],
-                                                                                         'magenta') + colored(
-                                    " has been found in file " + _file, 'yellow'))
-                                data = {"Finding": "Password", "File": _file,
-                                        "Details": {"Password complexity": password[1], "String": password[0]}}
+                                print(colored("Potential password ", 'yellow')+ colored(password[0], 'magenta')
+                                      + colored(" has been found in file " + _file, 'yellow'))
+                                data = {"Finding": "Password",
+                                        "File": _file,
+                                        "Details": {"Password complexity": password[1],
+                                                    "String": password[0]}}
                                 result.put(data)
                                 logger.info("potential password has been found in a file " + _file)
 
@@ -129,10 +128,7 @@ def analyzer(_file):
             remove_file(_file)
 
     except Exception as e:
-        logger.error("while trying to analyze "
-                     + str(_file)
-                     + ". Details:\n"
-                     + str(e))
+        logger.error("while trying to analyze " + str(_file) + ". Details:\n" + str(e))
 
 
 def get_base64_strings_from_file(_file):
@@ -282,10 +278,7 @@ def save_output():
             json.dump(data, f)
 
     except Exception as e:
-        logger.error("while trying to write to "
-                     + str(_file)
-                     + " file. Details:\n"
-                     + str(e))
+        logger.error("while trying to write to " + str(_file) + " file. Details:\n" + str(e))
 
 
 def password_search(line):
@@ -323,4 +316,4 @@ def digit_verifier(word):
 
 
 def order_verifier(word):
-    if 'abcdefgh' not in word.lower(): return True
+    return 'abcdefgh' not in word.lower()
