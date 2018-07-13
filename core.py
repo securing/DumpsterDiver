@@ -59,11 +59,11 @@ def mp_handler():
 
 def worker():
     _file = queue.get()
-    analyzer(_file)
+    analyze_file(_file)
     queue.task_done()
 
 
-def analyzer(_file):
+def analyze_file(_file):
     try:
         entropy_found = False
         rule_triggerred = False
@@ -75,7 +75,6 @@ def analyzer(_file):
         for word in get_base64_strings_from_file(_file):
 
             b64Entropy = shannon_entropy(word)
-
             if (b64Entropy > HIGH_ENTROPY_EDGE) and false_positive_filter(word):
                 print(colored("FOUND HIGH ENTROPY!!!", 'green'))
                 print(colored("The following string: ", 'green')
@@ -155,11 +154,20 @@ def get_base64_strings_from_file(_file):
     return words
 
 
+def file_reader(file_path):
+    if get_file_extension(file_path) in ARCHIVE_TYPES:
+        extract_path = get_unique_extract_path()
+        extract_archive(file_path, extract_path)
+        folder_reader(extract_path)
+    else:
+        queue.put(file_path)
+
+
 def folder_reader(path):
     try:
         for root, subfolder, files in os.walk(path):
             for filename in files:
-                extension = os.path.splitext(filename)[1]
+                extension = get_file_extension(filename)
                 _file = root + '/' + filename
 
                 # check if it is archive
@@ -172,7 +180,7 @@ def folder_reader(path):
 
                 elif extension in ARCHIVE_TYPES:
                     archive = root + '/' + filename
-                    extract_path = os.getcwd() + '/Extracted_files/' + str(time.time())
+                    extract_path = get_unique_extract_path()
                     extract_archive(archive, extract_path)
                     folder_reader(extract_path)
 
@@ -196,6 +204,14 @@ def folder_reader(path):
 
     except Exception as e:
         logger.error(e)
+
+
+def get_file_extension(filename):
+    return os.path.splitext(filename)[1]
+
+
+def get_unique_extract_path():
+    return os.getcwd() + '/Extracted_files/' + str(time.time())
 
 
 def remove_file(_file):
@@ -225,7 +241,10 @@ def extract_archive(archive_file, path):
 
 
 def start_the_hunt():
-    folder_reader(PATH)
+    if os.path.isfile(PATH):
+        file_reader(PATH)
+    else:
+        folder_reader(PATH)
     mp_handler()
     save_output()
 

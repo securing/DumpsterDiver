@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
         if arguments.local_path:
 
-            if os.path.isdir(arguments.local_path):
+            if os.path.isdir(arguments.local_path) or os.path.isfile(arguments.local_path):
                 core.PATH = os.path.abspath(arguments.local_path)
                 
             else:
