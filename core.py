@@ -176,7 +176,9 @@ def folder_reader(path):
 
                 elif extension in ARCHIVE_TYPES:
                     archive = root + '/' + filename
-                    folder_reader(extract_archive(archive))
+                    extract_path = os.getcwd() + '/Extracted_files/' + str(time.time())
+                    extract_archive(archive, extract_path)
+                    folder_reader(extract_path)
 
                 elif extension == '' and ('.git/objects/' in _file):
                     try:
@@ -208,44 +210,22 @@ def remove_file(_file):
         logger.error(e)
 
 
-def extract_archive(archive):
-    try:
-        if archive.endswith('.zip'):
-            opener, mode = zipfile.ZipFile, 'r'
+def extract_archive(archive_file, path):
+    if archive_file.endswith('.zip'):
+        opener, mode = zipfile.ZipFile, 'r'
 
-        elif archive.endswith('.tar.gz') or archive.endswith('.tgz'):
-            opener, mode = tarfile.open, 'r:gz'
+    elif archive_file.endswith('.tar.gz') or archive_file.endswith('.tgz'):
+        opener, mode = tarfile.open, 'r:gz'
 
-        elif archive.endswith('.tar.bz2') or archive.endswith('.tbz'):
-            opener, mode = tarfile.open, 'r:bz2'
+    elif archive_file.endswith('.tar.bz2') or archive_file.endswith('.tbz'):
+        opener, mode = tarfile.open, 'r:bz2'
 
-        else:
-            logger.info("Cannot open archive " + archive)
+    else:
+        logger.info("Extracting archive " + archive_file + " is not supported.")
+        return
 
-        cwd = os.getcwd()
-        # in case one archive contains another archive with the same name
-        # I used epoch time as the name for each extracted archive
-        extracted_folder = cwd + '/Extracted_files/' + str(time.time())
-        os.makedirs(extracted_folder)
-        os.chdir(extracted_folder)
-        _file = opener(archive, mode)
-        try:
-            _file.extractall()
-
-        except Exception as e:
-            print(colored("Cannot unpack " + archive + " archive",
-                          'red'))
-            logger.error(e)
-
-        finally:
-            _file.close()
-
-    except Exception as e:
-        logger.error(e)
-
-    finally:
-        os.chdir(cwd)
-        return extracted_folder
+    with opener(archive_file, mode) as archive:
+        archive.extractall(path=path)
 
 
 def start_the_hunt():
