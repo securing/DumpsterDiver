@@ -72,26 +72,11 @@ def analyze_file(_file):
             additional_checks = advancedSearch.AdvancedSearch()
             additional_checks.filetype_check(_file)
 
-        for word in get_base64_strings_from_file(_file):
-
-            b64Entropy = shannon_entropy(word)
-            if (b64Entropy > HIGH_ENTROPY_EDGE) and false_positive_filter(word):
-                print(colored("FOUND HIGH ENTROPY!!!", 'green'))
-                print(colored("The following string: ", 'green')
-                      + colored(word, 'magenta')
-                      + colored(" has been found in " + _file, 'green'))
-                print()
-                logger.info("high entropy has been found in a file " + _file)
-                data = {"Finding": "High entropy", "File": _file,
-                        "Details": {"Entropy": b64Entropy,
-                                    "String": word}}
-                result.put(data)
-                entropy_found = True
-
-            if ADVANCED_SEARCH:
+            for word in get_all_strings_from_file(_file):
                 additional_checks.grepper(word)
-
-        if ADVANCED_SEARCH:
+                if is_base64_with_correct_length(word, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
+                    if found_high_entropy(_file, word):
+                        entropy_found = True
 
             if additional_checks.final(_file):
                 data = {"Finding": "Advanced rule triggerred", "File": _file,
@@ -101,6 +86,10 @@ def analyze_file(_file):
                                     "grep_word_occurrence": additional_checks._GREP_WORD_OCCURRENCE,
                                     "grep_words_weight": additional_checks._GREP_WORDS_WEIGHT}}
                 result.put(data)
+        else:
+            for word in get_base64_strings_from_file(_file, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
+                if found_high_entropy(_file, word):
+                    entropy_found = True
 
         if PASSWORD_SEARCH:
             # have to read line by line instead of words
@@ -111,7 +100,7 @@ def analyze_file(_file):
                         if pass_list:
                             for password in pass_list:
                                 print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
-                                print(colored("Potential password ", 'yellow')+ colored(password[0], 'magenta')
+                                print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
                                       + colored(" has been found in file " + _file, 'yellow'))
                                 data = {"Finding": "Password",
                                         "File": _file,
@@ -130,28 +119,57 @@ def analyze_file(_file):
         logger.error("while trying to analyze " + str(_file) + ". Details:\n" + str(e))
 
 
-def get_base64_strings_from_file(_file):
-    words = []
-    with open(_file, 'r') as f:
+def found_high_entropy(_file, word):
+    b64Entropy = shannon_entropy(word)
 
+    if (b64Entropy > HIGH_ENTROPY_EDGE) and false_positive_filter(word):
+        print(colored("FOUND HIGH ENTROPY!!!", 'green'))
+        print(colored("The following string: ", 'green')
+              + colored(word, 'magenta')
+              + colored(" has been found in " + _file, 'green'))
+        print()
+        logger.info("high entropy has been found in a file " + _file)
+        data = {"Finding": "High entropy", "File": _file,
+                "Details": {"Entropy": b64Entropy,
+                            "String": word}}
+        result.put(data)
+        return True
+    return False
+
+
+def get_base64_strings_from_file(_file, min_length, max_length):
+    with open(_file, 'r') as open_file:
         word = ""
         while True:
 
-            buf = f.read(1024)
-
+            buf = open_file.read(1024)
             if not buf:
+                if max_length >= len(word) >= min_length:
+                    yield word
                 break
 
             for ch in buf:
                 if ch in BASE64_CHARS:
                     word += ch
-                elif MAX_KEY_LENGTH >= len(word) >= MIN_KEY_LENGTH:
-                    words.append(word)
+                elif max_length >= len(word) >= min_length:
+                    yield word
                     word = ""
                 else:
                     word = ""
 
-    return words
+
+def get_all_strings_from_file(_file):
+    with open(_file, 'r') as open_file:
+        for line in open_file.readlines():
+            for word in line.split():
+                yield word
+
+
+def is_base64_with_correct_length(word, min_length, max_length):
+    for ch in word:
+        if ch not in BASE64_CHARS:
+            return False
+    return max_length >= len(word) >= min_length
 
 
 def file_reader(file_path):
