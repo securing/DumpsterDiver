@@ -92,6 +92,14 @@ if __name__ == '__main__':
         nargs='+', help="specifies the grep words to look for. Multiple words should be "
                         + "separated by space. Wildcards are supported. Requires adding "
                         + "'-a' flag to the syntax.")
+    configuration.add_argument('--exclude-files', dest='exclude_files', action='store', 
+        nargs='+', help="specifies file names or extensions which shouldn't be analyzed. "
+                        + "File extension should contain '.' character (e.g. '.pdf'). "
+                        + "Multiple file names and extensions should be separated by space.")
+    configuration.add_argument('--bad-expressions', dest='bad_expressions', 
+        action='store', nargs='+', help="specifies bad expressions - if the DumpsterDiver "
+                        + "find such expression in a file, then this file won't be analyzed. "
+                        + "Multiple bad expressions should be separated by space. ")
 
     try:
         arguments = parser.parse_args()
@@ -102,7 +110,7 @@ if __name__ == '__main__':
 
         if arguments.local_path:
 
-            if os.path.isdir(arguments.local_path):
+            if os.path.isdir(arguments.local_path) or os.path.isfile(arguments.local_path):
                 core.PATH = os.path.abspath(arguments.local_path)
                 
             else:
@@ -129,6 +137,8 @@ if __name__ == '__main__':
         if arguments.max_pass: core.MAX_PASS_LENGTH = arguments.max_pass
         if arguments.password_complexity: core.PASSWORD_COMPLEXITY = arguments.password_complexity
         if arguments.grep_words: advancedSearch.GREP_WORDS = arguments.grep_words
+        if arguments.exclude_files: core.EXCLUDED_FILES = arguments.exclude_files
+        if arguments.bad_expressions: core.BAD_EXPRESSIONS = arguments.bad_expressions
 
         core.start_the_hunt()
             
