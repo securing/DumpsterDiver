@@ -1,4 +1,0 @@
-test.txt
-dupa
-1.sql
-create tab
