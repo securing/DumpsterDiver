@@ -376,3 +376,4 @@ def bad_expression_verifier(_file):
 
     except Exception as e:
         logger.error("while trying to open " + str(_file) + " file. Details:\n" + str(e))
+
