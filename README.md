@@ -21,7 +21,14 @@ The main idea of this tool is to detect any potential secret leaks. You can watc
 ### Usage
 
 ```
-usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-o]
+usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-l [0,3]]
+                        [-o OUTFILE] [--min-key MIN_KEY] [--max-key MAX_KEY]
+                        [--entropy ENTROPY] [--min-pass MIN_PASS]
+                        [--max-pass MAX_PASS]
+                        [--pass-complex {1,2,3,4,5,6,7,8,9}]
+                        [--grep-words GREP_WORDS [GREP_WORDS ...]]
+                        [--exclude-files EXCLUDE_FILES [EXCLUDE_FILES ...]]
+                        [--bad-expressions BAD_EXPRESSIONS [BAD_EXPRESSIONS ...]]
 ```
 
 
@@ -62,7 +69,7 @@ By setting up  a level you can limit your findings (e.g. only to long keys, like
 * `--min-key MIN_KEY` - specifies the minimum key length to be analyzed (default is 20).
 * `--max-key MAX_KEY` - specifies the maximum key length to be analyzed (default is 80).
 * `--entropy ENTROPY` - specifies the edge of high entropy (default is 4.3).
-* `--grep-words GREP_WORDS [GREP_WORDS ...]` - specifies the grep words to look for. Multiple words should be separated by space. Wildcards are supported. Requires adding `'-a'` flag to the syntax.
+* `--grep-words GREP_WORDS [GREP_WORDS ...]` - specifies the grep words to look for. Multiple words should be separated by space. Wildcards are supported. Requires adding `-a` flag to the syntax.
 
 There is also added a separate script which allows you to count an entropy of a character in a single word. It will help you to better customize the DumpsterDiver to your needs. You can check it using the following command:
 
@@ -93,9 +100,9 @@ This way is quite helpful when you know what you're looking for. Here are few ex
 ##### Finding hardcoded passwords
 Using entropy for finding passwords isn't very effective as it generates a lot of false positives. This is why the DumpsterDiver uses a different attitude to find hardcoded passwords - it verifies the password complexity using [passwordmeter]('https://pypi.org/project/passwordmeter/'). To customize this search you can use the following commands:
 
-* `--min-pass MIN_PASS` - specifies the minimum password length to be analyzed (default is 8). Requires adding `'-s'` flag to the syntax.
-* `--max-pass MAX_PASS` - specifies the maximum password length to be analyzed (default is 12). Requires adding `'-s'` flag to the syntax.
-* `--pass-complex {1,2,3,4,5,6,7,8,9}` - specifies the edge of password complexity between 1 (trivial passwords) to 9 (very complex passwords) (default is 8). Requires adding `'-s'` flag to the syntax.
+* `--min-pass MIN_PASS` - specifies the minimum password length to be analyzed (default is 8). Requires adding `-s` flag to the syntax.
+* `--max-pass MAX_PASS` - specifies the maximum password length to be analyzed (default is 12). Requires adding `-s` flag to the syntax.
+* `--pass-complex {1,2,3,4,5,6,7,8,9}` - specifies the edge of password complexity between 1 (trivial passwords) to 9 (very complex passwords) (default is 8). Requires adding `-s` flag to the syntax.
 
 For example if you want to find complex passwords (which contains uppercase, lowercase, special character, digit and is 10 to 15 characters long), then you can do it using the following command:
 
@@ -106,21 +113,21 @@ For example if you want to find complex passwords (which contains uppercase, low
 
 You may want to skip scanning certain files. For that purpose you can use the following parameters:
 
-* `--exclude-files` - specifies file names or extensions which shouldn't be analyzed. File extension should contain `'.'` character (e.g. `'.pdf'`). Multiple file names and extensions should be separated by space.
+* `--exclude-files` - specifies file names or extensions which shouldn't be analyzed. File extension should contain `.` character (e.g. `.pdf`). Multiple file names and extensions should be separated by space.
 
 * `--bad-expressions` - specifies bad expressions. If the DumpsterDiver find such expression in a file, then this file won't be
 analyzed. Multiple bad expressions should be separated by space.
 
 > If you want to specify multiple file names, bad expressions or grep words using a separated file you can do it via the following bash trick:
 > ```
-> $> python3 DumpsterDiver.py -p ./test/ --exclude-files `while read -r line; do echo $line; done < black_listed_files.txt`
+> $> python3 DumpsterDiver.py -p ./test/ --exclude-files `while read -r line; do echo $line; done < blacklisted_files.txt`
 > ```
 
 #### Customization via config.yaml file
 Instead of using multiple command line parameters you can specify values for all the above-mentioned parameters at once in `config.yaml` file.
 
 ### Advanced search:
-The DumpsterDiver supports also an advanced search. Beyond a simple grepping with wildcards this tool allows you to create conditions. Let's assume you're searching for a leak of corporate emails. Additionaly, you're interested only in a big leaks, which contain at least 100 email addresses. For this purpose you should edit a 'rules.yaml' file in the following way:
+The DumpsterDiver supports also an advanced search. Beyond a simple grepping with wildcards this tool allows you to create conditions. Let's assume you're searching for a leak of corporate emails. Additionaly, you're interested only in a big leaks, which contain at least 100 email addresses. For this purpose you should edit a `rules.yaml` file in the following way:
 
 ```
 filetype: [".*"]
@@ -147,7 +154,7 @@ A docker image is available for DumpsterDiver. Run it using:
 ```
 $> docker run -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
 ```
-If you want to override one of the configuration files (**config.yaml** or **rules.yaml**):
+If you want to override one of the configuration files (`config.yaml` or `rules.yaml`):
 ```
 $> docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rules.yaml:/rules.yaml -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
 ```
