@@ -4,8 +4,9 @@ import advancedSearch
 import fnmatch
 import json
 import logging
-import multiprocessing
 import math
+import mmap
+import multiprocessing
 import os
 import passwordmeter
 import re
@@ -21,7 +22,7 @@ BASE64_CHARS = CONFIG['base64_chars']
 PATH = './'
 OUTFILE = ''
 ARCHIVE_TYPES = CONFIG['archive_types']
-EXCLUDED = CONFIG['excluded']
+EXCLUDED_FILES = CONFIG['excluded_files']
 REMOVE_FLAG = False
 ADVANCED_SEARCH = False
 LOGFILE = CONFIG['logfile']
@@ -32,6 +33,7 @@ PASSWORD_SEARCH = False
 MIN_PASS_LENGTH = CONFIG['min_pass_length']
 MAX_PASS_LENGTH = CONFIG['max_pass_length']
 PASSWORD_COMPLEXITY = CONFIG['password_complexity']
+BAD_EXPRESSIONS = CONFIG['bad_expressions']
 
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -65,6 +67,12 @@ def worker():
 
 def analyze_file(_file):
     try:
+        if BAD_EXPRESSIONS:
+            if bad_expression_verifier(_file):
+                logger.info("Bad expression has been found in a " + _file 
+                    + " file. Skipping further analysis.")
+                return
+
         entropy_found = False
         rule_triggerred = False
 
@@ -86,10 +94,10 @@ def analyze_file(_file):
                                     "grep_word_occurrence": additional_checks._GREP_WORD_OCCURRENCE,
                                     "grep_words_weight": additional_checks._GREP_WORDS_WEIGHT}}
                 result.put(data)
-        else:
-            for word in get_base64_strings_from_file(_file, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
-                if found_high_entropy(_file, word):
-                    entropy_found = True
+        
+        for word in get_base64_strings_from_file(_file, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
+            if found_high_entropy(_file, word):
+                entropy_found = True
 
         if PASSWORD_SEARCH:
             # have to read line by line instead of words
@@ -185,12 +193,12 @@ def folder_reader(path):
     try:
         for root, subfolder, files in os.walk(path):
             for filename in files:
+
                 extension = get_file_extension(filename)
                 _file = root + '/' + filename
 
                 # check if it is archive
-                if (extension or filename) in EXCLUDED:
-
+                if filename in EXCLUDED_FILES or extension in EXCLUDED_FILES:
                     # remove unnecesarry files
                     if REMOVE_FLAG:
                         _file = root + '/' + filename
@@ -354,3 +362,18 @@ def digit_verifier(word):
 
 def order_verifier(word):
     return 'abcdefgh' not in word.lower()
+
+def bad_expression_verifier(_file):
+    try:
+
+        with open(_file, 'rb', 0) as f, \
+        mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as string_object:
+
+            for search_expression in BAD_EXPRESSIONS:
+
+                if string_object.find(search_expression.encode()) != -1:
+                    return True          
+
+    except Exception as e:
+        logger.error("while trying to open " + str(_file) + " file. Details:\n" + str(e))
+
