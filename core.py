@@ -43,13 +43,6 @@ queue = multiprocessing.Manager().Queue()
 result = multiprocessing.Manager().Queue()
 
 
-def log(msg, log_type='error'):
-    if log_type == 'error':
-        logger.error(msg)
-    elif log_type == 'info':
-        logger.info(msg)
-
-
 def mp_handler():
     # depending on your hardware the DumpsterDiver will use all available cores for
     # parallel processing
