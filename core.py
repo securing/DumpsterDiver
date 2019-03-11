@@ -106,18 +106,16 @@ def analyze_file(_file):
             try:
                 with open(_file) as f:
                     for line in f:
-                        pass_list = password_search(line)
-                        if pass_list:
-                            for password in pass_list:
-                                print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
-                                print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
-                                      + colored(" has been found in file " + _file, 'yellow'))
-                                data = {"Finding": "Password",
-                                        "File": _file,
-                                        "Details": {"Password complexity": password[1],
-                                                    "String": password[0]}}
-                                result.put(data)
-                                logger.info("potential password has been found in a file " + _file)
+                        for password in password_search(line):
+                            print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
+                            print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
+                                    + colored(" has been found in file " + _file, 'yellow'))
+                            data = {"Finding": "Password",
+                                    "File": _file,
+                                    "Details": {"Password complexity": password[1],
+                                                "String": password[0]}}
+                            result.put(data)
+                            logger.info("potential password has been found in a file " + _file)
 
             except Exception as e:
                 logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
@@ -343,9 +341,7 @@ def password_search(line):
             if password_complexity < PASSWORD_COMPLEXITY:
                 continue
 
-            pass_list.append((string, password_complexity))
-
-        return pass_list
+            yield (string, password_complexity)
 
     except Exception as e:
         logger.error(e)
