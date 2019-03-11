@@ -35,6 +35,8 @@ MAX_PASS_LENGTH = CONFIG['max_pass_length']
 PASSWORD_COMPLEXITY = CONFIG['password_complexity']
 BAD_EXPRESSIONS = CONFIG['bad_expressions']
 
+PASSWORD_REGEX = re.compile(r"['\">](.*?)['\"<]")
+
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
@@ -328,15 +330,14 @@ def save_output():
 
 def password_search(line):
     try:
-
-        potential_pass_list = re.findall(r"['\">](.*?)['\"<]", line)
+        potential_pass_list = re.findall(PASSWORD_REGEX, line)
         pass_list = []
 
         for string in potential_pass_list:
             password_complexity = passwordmeter.test(string)[0]
 
             if (password_complexity >= PASSWORD_COMPLEXITY * 0.1) and \
-                    (not re.search(r"\s", string)) and \
+                    (not has_whitespace(string)) and \
                     (MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH):
                 pass_list.append((string, password_complexity))
 
@@ -354,6 +355,13 @@ def false_positive_filter(word):
 
     except Exception as e:
         logger.error(e)
+
+
+def has_whitespace(string):
+    for s in string:
+        if s.isspace():
+            return True
+    return False
 
 
 def digit_verifier(word):
