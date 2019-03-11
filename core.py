@@ -334,12 +334,16 @@ def password_search(line):
         pass_list = []
 
         for string in potential_pass_list:
+            if (not MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH) or \
+                any(ch.isspace() for ch in string):
+                continue
+
             password_complexity = passwordmeter.test(string)[0]
 
-            if (password_complexity >= PASSWORD_COMPLEXITY) and \
-                    (not has_whitespace(string)) and \
-                    (MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH):
-                pass_list.append((string, password_complexity))
+            if password_complexity < PASSWORD_COMPLEXITY:
+                continue
+
+            pass_list.append((string, password_complexity))
 
         return pass_list
 
