@@ -353,10 +353,7 @@ def password_search(line):
 
 def false_positive_filter(word):
     try:
-
-        return all([digit_verifier(word),
-                    order_verifier(word)])
-
+        return digit_verifier(word) and order_verifier(word)
     except Exception as e:
         logger.error(e)
 
