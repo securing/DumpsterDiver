@@ -213,8 +213,6 @@ def folder_reader(path):
                                 if decompressed:
                                     queue.put(decompressed)
 
-                                f.close()
-
                     except Exception as e:
                         logger.error(e)
 
@@ -298,8 +296,8 @@ def git_object_reader(_file):
 
         with open(new_file, 'w') as decompressed_file:
             decompressed_file.write(str(decompressed))
-            decompressed_file.close()
-            return new_file
+
+        return new_file
 
     except Exception as e:
         logger.error(e)
