@@ -45,13 +45,6 @@ queue = multiprocessing.Manager().Queue()
 result = multiprocessing.Manager().Queue()
 
 
-def log(msg, log_type='error'):
-    if log_type == 'error':
-        logger.error(msg)
-    elif log_type == 'info':
-        logger.info(msg)
-
-
 def mp_handler():
     # depending on your hardware the DumpsterDiver will use all available cores for
     # parallel processing
@@ -220,8 +213,6 @@ def folder_reader(path):
                                 if decompressed:
                                     queue.put(decompressed)
 
-                                f.close()
-
                     except Exception as e:
                         logger.error(e)
 
@@ -305,8 +296,8 @@ def git_object_reader(_file):
 
         with open(new_file, 'w') as decompressed_file:
             decompressed_file.write(str(decompressed))
-            decompressed_file.close()
-            return new_file
+
+        return new_file
 
     except Exception as e:
         logger.error(e)
