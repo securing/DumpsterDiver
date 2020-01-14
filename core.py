@@ -32,8 +32,10 @@ HIGH_ENTROPY_EDGE = CONFIG['high_entropy_edge']
 PASSWORD_SEARCH = False
 MIN_PASS_LENGTH = CONFIG['min_pass_length']
 MAX_PASS_LENGTH = CONFIG['max_pass_length']
-PASSWORD_COMPLEXITY = CONFIG['password_complexity']
+PASSWORD_COMPLEXITY = CONFIG['password_complexity'] * 0.1
 BAD_EXPRESSIONS = CONFIG['bad_expressions']
+
+PASSWORD_REGEX = re.compile(r"['\">](.*?)['\"<]")
 
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -104,18 +106,16 @@ def analyze_file(_file):
             try:
                 with open(_file) as f:
                     for line in f:
-                        pass_list = password_search(line)
-                        if pass_list:
-                            for password in pass_list:
-                                print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
-                                print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
-                                      + colored(" has been found in file " + _file, 'yellow'))
-                                data = {"Finding": "Password",
-                                        "File": _file,
-                                        "Details": {"Password complexity": password[1],
-                                                    "String": password[0]}}
-                                result.put(data)
-                                logger.info("potential password has been found in a file " + _file)
+                        for password in password_search(line):
+                            print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
+                            print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
+                                    + colored(" has been found in file " + _file, 'yellow'))
+                            data = {"Finding": "Password",
+                                    "File": _file,
+                                    "Details": {"Password complexity": password[1],
+                                                "String": password[0]}}
+                            result.put(data)
+                            logger.info("potential password has been found in a file " + _file)
 
             except Exception as e:
                 logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
@@ -328,19 +328,20 @@ def save_output():
 
 def password_search(line):
     try:
-
-        potential_pass_list = re.findall(r"['\">](.*?)['\"<]", line)
+        potential_pass_list = re.findall(PASSWORD_REGEX, line)
         pass_list = []
 
         for string in potential_pass_list:
+            if (not MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH) or \
+                any(ch.isspace() for ch in string):
+                continue
+
             password_complexity = passwordmeter.test(string)[0]
 
-            if (password_complexity >= PASSWORD_COMPLEXITY * 0.1) and \
-                    (not re.search(r"\s", string)) and \
-                    (MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH):
-                pass_list.append((string, password_complexity))
+            if password_complexity < PASSWORD_COMPLEXITY:
+                continue
 
-        return pass_list
+            yield (string, password_complexity)
 
     except Exception as e:
         logger.error(e)
@@ -348,12 +349,16 @@ def password_search(line):
 
 def false_positive_filter(word):
     try:
-
-        return all([digit_verifier(word),
-                    order_verifier(word)])
-
+        return digit_verifier(word) and order_verifier(word)
     except Exception as e:
         logger.error(e)
+
+
+def has_whitespace(string):
+    for s in string:
+        if s.isspace():
+            return True
+    return False
 
 
 def digit_verifier(word):
