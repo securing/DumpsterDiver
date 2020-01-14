@@ -32,7 +32,7 @@ HIGH_ENTROPY_EDGE = CONFIG['high_entropy_edge']
 PASSWORD_SEARCH = False
 MIN_PASS_LENGTH = CONFIG['min_pass_length']
 MAX_PASS_LENGTH = CONFIG['max_pass_length']
-PASSWORD_COMPLEXITY = CONFIG['password_complexity'] * 0.1
+PASSWORD_COMPLEXITY = CONFIG['password_complexity']
 BAD_EXPRESSIONS = CONFIG['bad_expressions']
 
 PASSWORD_REGEX = re.compile(r"['\">](.*?)['\"<]")
@@ -338,7 +338,7 @@ def password_search(line):
 
             password_complexity = passwordmeter.test(string)[0]
 
-            if password_complexity < PASSWORD_COMPLEXITY:
+            if password_complexity < PASSWORD_COMPLEXITY * 0.1:
                 continue
 
             yield (string, password_complexity)
