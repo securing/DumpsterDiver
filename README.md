@@ -1,10 +1,14 @@
 
 
+<p align="center">
+  <img src="./static/images/DumpsterDiver_logo.png" width="400" alt="DumpsterDiver_logo" />
+</p>
+
 DumpsterDiver (by @Rzepsky)
 ========================================
 
-DumpsterDiver is a tool used to analyze big volumes of various file types in search of hardcoded secrets like keys (e.g. AWS Access Key, Azure Share Key or SSH keys) or passwords. Additionally, it allows creating a simple search rules with basic conditions (e.g. reports only csv file including at least 10 email addresses).
-The main idea of this tool is to detect any potential secret leaks. You can watch it in action in the [demo video](https://vimeo.com/272944858) or read about all its features in [this article](https://medium.com/@rzepsky/hunting-for-secrets-with-the-dumpsterdiver-93d38a9cd4c1).
+DumpsterDiver is a tool, which can analyze big volumes of data in search of hardcoded secrets like keys (e.g. AWS Access Key, Azure Share Key or SSH keys) or passwords. Additionally, it allows creating a simple search rules with basic conditions (e.g. report only csv files including at least 10 email addresses).
+The main idea of this tool is to detect any potential secret leaks. You can watch it in action in the [demo video](https://vimeo.com/398343810) or read about all its features in [this article](https://medium.com/@rzepsky/hunting-for-secrets-with-the-dumpsterdiver-93d38a9cd4c1).
 
 <p align="center">
   <img src="https://github.com/xep624/DumpsterDiver/blob/master/static/images/dumpster_diver.png?raw=true" alt="DumpsterDiver" />
@@ -36,8 +40,8 @@ usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-l [0,3]]
 
 
 * `-p LOCAL_PATH` - path to the folder containing files to be analyzed.
+* `-a, --advance` - when this flag is set, then all files will be additionally analyzed using rules specified in `rules.yaml` file.
 * `-r, --remove` - when this flag is set, then files which don't contain any secret (or anything interesting if `-a` flag is set) will be removed.
-* `-a, --advance` - when this flag is set, then all files will be additionally analyzed using rules specified in 'rules.yaml' file.
 *  `-s, --secret` - when this flag is set, then all files will be additionally analyzed in search of hardcoded passwords.
 * `-o OUTFILE` -  output file in JSON format.
 
@@ -57,12 +61,12 @@ There is no single tool which fits for everyone's needs and the DumpsterDiver is
 * using `config.yaml` file
 
 #### Customization via levels
-By setting up  a level you can limit your findings (e.g. only to long keys, like SSH private keys) and in the same way limit the false positives. The level can be set from command line and below you cand find the detailed description of each choice:
+By setting up  a level you can limit your findings (e.g. only to long keys, like SSH keys) and in the same way limit false positives. The level can be set from command line and below you can find the detailed description of each choice:
 
 * `--level 0` - searches for short (20-40 bytes long) keys, e.g. AWS Access Key ID. 
 * `--level 1` - (default) searches for typical (40-70 bytes long) keys, e.g. AWS Secret Access Key or Azure Shared Key. 
 * `--level 2` - searches for long (1000-1800 bytes long) keys, e.g. SSH private key
-* `--level 3` - searches for any key (20-1800 bytes long), careful as it generates lots of false positives
+* `--level 3` - searches for any key (20-1800 bytes long). Be careful with this setting, because it may generate lots of false positives.
 
 #### Customization via command line parameters
 
@@ -87,7 +91,7 @@ This way is quite helpful when you know what you're looking for. Here are few ex
 
 `$> python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 66 --max-key 66 --entropy 5.1`
 
-* When you're looking for SSH private key (by default RSA provate key is written in 76 bytes long strings):
+* When you're looking for SSH private key (by default RSA private key is written in 76 bytes long strings):
 
 `$> python3 DumpsterDiver.py -p [PATH_TO_FOLDER] --min-key 76 --max-key 76 --entropy 5.1`
 
@@ -161,7 +165,7 @@ $> docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/
 
 ### Contribution
 
-Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky](https://twitter.com/Rzepsky) or drop me a message at [pawel.rzepa@outlook.com](mailto:pawel.rzepa@outlook.com) and I would be more than happy to see here any contributors!
+Do you have better ideas? Wanna help in this project? Please contact me via twitter [@Rzepsky](https://twitter.com/Rzepsky). I would be more than happy to see here any contributors!
 
 ### Special thanks
 Here I'd like to thank so much all those who helped develop this project:
@@ -169,7 +173,8 @@ Here I'd like to thank so much all those who helped develop this project:
 * [Stephen Sorriaux](https://github.com/StephenSorriaux)
 * [Andres Riancho](https://twitter.com/w3af)
 * [Damian Stygar](https://github.com/DahDev)
+* [Disconnect3d](https://twitter.com/disconnect3d_pl)
 
 ### License
 
-See the LICENSE file.
+See the [LICENSE](./LICENSE) file.
