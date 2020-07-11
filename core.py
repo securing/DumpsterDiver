@@ -51,7 +51,8 @@ def mp_handler():
 
     p = multiprocessing.Pool(multiprocessing.cpu_count())
     while queue.qsize():
-        result = p.apply_async(worker, )
+        p.apply_async(worker, )
+    queue.join()
 
 
 def worker():
@@ -192,7 +193,7 @@ def folder_reader(path):
 
                 # check if it is archive
                 if filename in EXCLUDED_FILES or extension in EXCLUDED_FILES:
-                    # remove unnecesarry files
+                    # remove unnecessary files
                     if REMOVE_FLAG:
                         _file = root + '/' + filename
                         remove_file(_file)
@@ -314,7 +315,7 @@ def save_output():
             json.dump(data, f)
 
     except Exception as e:
-        logger.error("while trying to write to " + str(_file) + " file. Details:\n" + str(e))
+        logger.error("while trying to write to " + str(OUTFILE) + " file. Details:\n" + str(e))
 
 
 def password_search(line):
