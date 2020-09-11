@@ -174,6 +174,7 @@ Here I'd like to thank so much all those who helped develop this project:
 * [Andres Riancho](https://twitter.com/w3af)
 * [Damian Stygar](https://github.com/DahDev)
 * [Disconnect3d](https://twitter.com/disconnect3d_pl)
+* [johann](https://github.com/raztus)
 
 ### License
 
