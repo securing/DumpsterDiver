@@ -41,27 +41,23 @@ logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
 
-queue = multiprocessing.Manager().Queue()
-result = multiprocessing.Manager().Queue()
-
-
-def mp_handler():
+def mp_handler(queue, result):
     # depending on your hardware the DumpsterDiver will use all available cores for
     # parallel processing
 
     p = multiprocessing.Pool(multiprocessing.cpu_count())
     while queue.qsize():
-        p.apply_async(worker, )
+        p.apply_async(worker, (queue,result,))
     queue.join()
 
 
-def worker():
+def worker(queue, result):
     _file = queue.get()
-    analyze_file(_file)
+    analyze_file(_file, result)
     queue.task_done()
 
 
-def analyze_file(_file):
+def analyze_file(_file, result):
     try:
         if BAD_EXPRESSIONS:
             if bad_expression_verifier(_file):
@@ -79,7 +75,7 @@ def analyze_file(_file):
             for word in get_all_strings_from_file(_file):
                 additional_checks.grepper(word)
                 if is_base64_with_correct_length(word, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
-                    if found_high_entropy(_file, word):
+                    if found_high_entropy(_file, word, result):
                         entropy_found = True
 
             if additional_checks.final(_file):
@@ -92,7 +88,7 @@ def analyze_file(_file):
                 result.put(data)
         
         for word in get_base64_strings_from_file(_file, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
-            if found_high_entropy(_file, word):
+            if found_high_entropy(_file, word, result):
                 entropy_found = True
 
         if PASSWORD_SEARCH:
@@ -121,7 +117,7 @@ def analyze_file(_file):
         logger.error("while trying to analyze " + str(_file) + ". Details:\n" + str(e))
 
 
-def found_high_entropy(_file, word):
+def found_high_entropy(_file, word, result):
     b64Entropy = shannon_entropy(word)
 
     if (b64Entropy > HIGH_ENTROPY_EDGE) and false_positive_filter(word):
@@ -174,16 +170,16 @@ def is_base64_with_correct_length(word, min_length, max_length):
     return max_length >= len(word) >= min_length
 
 
-def file_reader(file_path):
+def file_reader(file_path, queue):
     if get_file_extension(file_path) in ARCHIVE_TYPES:
         extract_path = get_unique_extract_path()
         extract_archive(file_path, extract_path)
-        folder_reader(extract_path)
+        folder_reader(extract_path, queue)
     else:
         queue.put(file_path)
 
 
-def folder_reader(path):
+def folder_reader(path, queue):
     try:
         for root, subfolder, files in os.walk(path):
             for filename in files:
@@ -202,7 +198,7 @@ def folder_reader(path):
                     archive = root + '/' + filename
                     extract_path = get_unique_extract_path()
                     extract_archive(archive, extract_path)
-                    folder_reader(extract_path)
+                    folder_reader(extract_path, queue)
 
                 elif extension == '' and ('.git/objects/' in _file):
                     try:
@@ -259,12 +255,15 @@ def extract_archive(archive_file, path):
 
 
 def start_the_hunt():
+    queue = multiprocessing.Manager().Queue()
+    result = multiprocessing.Manager().Queue()
+
     if os.path.isfile(PATH):
-        file_reader(PATH)
+        file_reader(PATH, queue)
     else:
-        folder_reader(PATH)
-    mp_handler()
-    save_output()
+        folder_reader(PATH, queue)
+    mp_handler(queue, result)
+    save_output(result)
 
 
 def shannon_entropy(data):
@@ -304,7 +303,7 @@ def git_object_reader(_file):
         logger.error(e)
 
 
-def save_output():
+def save_output(result):
     try:
         data = []
 
