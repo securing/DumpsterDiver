@@ -1,4 +1,3 @@
 termcolor==1.1.0
-colorama==0.4.3
 passwordmeter==0.1.8
 PyYAML==5.1
