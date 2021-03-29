@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/env python
 
 import advancedSearch
 import core
@@ -6,8 +6,6 @@ import os
 import sys
 import argparse
 from termcolor import colored
-import colorama
-colorama.init()
 
 
 #Borrowed from https://bitbucket.org/ruamel/std.argparse

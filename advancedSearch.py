@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/env python
 
 import core
 import fnmatch
