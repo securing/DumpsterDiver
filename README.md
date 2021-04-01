@@ -25,12 +25,11 @@ The main idea of this tool is to detect any potential secret leaks. You can watc
 ### Usage
 
 ```
-usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-l [0,3]]
-                        [-o OUTFILE] [--min-key MIN_KEY] [--max-key MAX_KEY]
+usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-o OUTFILE]
+                        [--min-key MIN_KEY] [--max-key MAX_KEY]
                         [--entropy ENTROPY] [--min-pass MIN_PASS]
                         [--max-pass MAX_PASS]
                         [--pass-complex {1,2,3,4,5,6,7,8,9}]
-                        [--grep-words GREP_WORDS [GREP_WORDS ...]]
                         [--exclude-files EXCLUDE_FILES [EXCLUDE_FILES ...]]
                         [--bad-expressions BAD_EXPRESSIONS [BAD_EXPRESSIONS ...]]
 ```
@@ -54,26 +53,16 @@ $> pip install -r requirements.txt
 If you have installed separately Python 2 and 3 then you should use `pip3` or `pip3.6`.  
 
 ### Customizing your search
-There is no single tool which fits for everyone's needs and the DumpsterDiver is not an exception here. There are 3 ways to customize your search:
+There is no single tool which fits for everyone's needs and the DumpsterDiver is not an exception here. There are 2 ways to customize your search:
 
-* using levels
 * using command line parameters
 * using `config.yaml` file
-
-#### Customization via levels
-By setting up  a level you can limit your findings (e.g. only to long keys, like SSH keys) and in the same way limit false positives. The level can be set from command line and below you can find the detailed description of each choice:
-
-* `--level 0` - searches for short (20-40 bytes long) keys, e.g. AWS Access Key ID. 
-* `--level 1` - (default) searches for typical (40-70 bytes long) keys, e.g. AWS Secret Access Key or Azure Shared Key. 
-* `--level 2` - searches for long (1000-1800 bytes long) keys, e.g. SSH private key
-* `--level 3` - searches for any key (20-1800 bytes long). Be careful with this setting, because it may generate lots of false positives.
 
 #### Customization via command line parameters
 
 * `--min-key MIN_KEY` - specifies the minimum key length to be analyzed (default is 20).
 * `--max-key MAX_KEY` - specifies the maximum key length to be analyzed (default is 80).
 * `--entropy ENTROPY` - specifies the edge of high entropy (default is 4.3).
-* `--grep-words GREP_WORDS [GREP_WORDS ...]` - specifies the grep words to look for. Multiple words should be separated by space. Wildcards are supported. Requires adding `-a` flag to the syntax.
 
 There is also added a separate script which allows you to count an entropy of a character in a single word. It will help you to better customize the DumpsterDiver to your needs. You can check it using the following command:
 
