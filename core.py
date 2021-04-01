@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python3
 
 import advancedSearch
 import fnmatch
@@ -19,17 +19,15 @@ from termcolor import colored
 
 CONFIG = yaml.safe_load(open('config.yaml'))
 BASE64_CHARS = CONFIG['base64_chars']
-PATH = './'
-OUTFILE = ''
+#PATH = './'
+#OUTFILE = ''
 ARCHIVE_TYPES = CONFIG['archive_types']
 EXCLUDED_FILES = CONFIG['excluded_files']
-REMOVE_FLAG = False
-ADVANCED_SEARCH = False
+#REMOVE_FLAG = False
 LOGFILE = CONFIG['logfile']
 MIN_KEY_LENGTH = CONFIG['min_key_length']
 MAX_KEY_LENGTH = CONFIG['max_key_length']
 HIGH_ENTROPY_EDGE = CONFIG['high_entropy_edge']
-PASSWORD_SEARCH = False
 MIN_PASS_LENGTH = CONFIG['min_pass_length']
 MAX_PASS_LENGTH = CONFIG['max_pass_length']
 PASSWORD_COMPLEXITY = CONFIG['password_complexity']
@@ -41,45 +39,45 @@ logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
 
-queue = multiprocessing.Manager().Queue()
-result = multiprocessing.Manager().Queue()
-
-
-def mp_handler():
+def mp_handler(queue, result, settings):
     # depending on your hardware the DumpsterDiver will use all available cores for
     # parallel processing
 
     p = multiprocessing.Pool(multiprocessing.cpu_count())
     while queue.qsize():
-        p.apply_async(worker, )
+        p.apply_async(worker, (queue,result,settings))
     queue.join()
 
 
-def worker():
+def worker(queue, result, settings):
     _file = queue.get()
-    analyze_file(_file)
+    analyze_file(_file, result, settings)
     queue.task_done()
 
 
-def analyze_file(_file):
+def analyze_file(_file, result, settings):
     try:
-        if BAD_EXPRESSIONS:
-            if bad_expression_verifier(_file):
+        bad_expressions = settings.bad_expressions if settings.bad_expressions else BAD_EXPRESSIONS
+        if bad_expressions:
+            if bad_expression_verifier(_file, bad_expressions):
                 logger.info("Bad expression has been found in a " + _file 
                     + " file. Skipping further analysis.")
                 return
 
         entropy_found = False
         rule_triggerred = False
+        min_key = settings.min_key if settings.min_key else MIN_KEY_LENGTH
+        max_key = settings.max_key if settings.max_key else MAX_KEY_LENGTH
+        entropy = settings.entropy if settings.entropy else HIGH_ENTROPY_EDGE
 
-        if ADVANCED_SEARCH:
+        if settings.advance:
             additional_checks = advancedSearch.AdvancedSearch()
             additional_checks.filetype_check(_file)
 
             for word in get_all_strings_from_file(_file):
                 additional_checks.grepper(word)
-                if is_base64_with_correct_length(word, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
-                    if found_high_entropy(_file, word):
+                if is_base64_with_correct_length(word, min_key, max_key):
+                    if found_high_entropy(_file, word, result, entropy):
                         entropy_found = True
 
             if additional_checks.final(_file):
@@ -91,16 +89,17 @@ def analyze_file(_file):
                                     "grep_words_weight": additional_checks._GREP_WORDS_WEIGHT}}
                 result.put(data)
         
-        for word in get_base64_strings_from_file(_file, MIN_KEY_LENGTH, MAX_KEY_LENGTH):
-            if found_high_entropy(_file, word):
+        for word in get_base64_strings_from_file(_file, min_key, max_key):
+            if found_high_entropy(_file, word, result, entropy):
                 entropy_found = True
 
-        if PASSWORD_SEARCH:
+        if settings.secret:
             # have to read line by line instead of words
+
             try:
                 with open(_file) as f:
                     for line in f:
-                        for password in password_search(line):
+                        for password in password_search(line, settings):
                             print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
                             print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
                                     + colored(" has been found in file " + _file, 'yellow'))
@@ -114,17 +113,17 @@ def analyze_file(_file):
             except Exception as e:
                 logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
 
-        if REMOVE_FLAG and not (entropy_found or rule_triggerred):
+        if settings.remove and not (entropy_found or rule_triggerred):
             remove_file(_file)
 
     except Exception as e:
         logger.error("while trying to analyze " + str(_file) + ". Details:\n" + str(e))
 
 
-def found_high_entropy(_file, word):
+def found_high_entropy(_file, word, result, entropy):
     b64Entropy = shannon_entropy(word)
 
-    if (b64Entropy > HIGH_ENTROPY_EDGE) and false_positive_filter(word):
+    if (b64Entropy > entropy) and false_positive_filter(word):
         print(colored("FOUND HIGH ENTROPY!!!", 'green'))
         print(colored("The following string: ", 'green')
               + colored(word, 'magenta')
@@ -174,27 +173,29 @@ def is_base64_with_correct_length(word, min_length, max_length):
     return max_length >= len(word) >= min_length
 
 
-def file_reader(file_path):
-    if get_file_extension(file_path) in ARCHIVE_TYPES:
+def file_reader(queue, settings):
+    if get_file_extension(settings.local_path) in ARCHIVE_TYPES:
         extract_path = get_unique_extract_path()
-        extract_archive(file_path, extract_path)
-        folder_reader(extract_path)
+        extract_archive(settings.local_path, extract_path)
+        folder_reader(extract_path, queue, settings)
     else:
-        queue.put(file_path)
+        queue.put(settings.local_path)
 
 
-def folder_reader(path):
+def folder_reader(queue, settings):
     try:
-        for root, subfolder, files in os.walk(path):
+        excluded_files = settings.exclude_files if settings.exclude_files else EXCLUDED_FILES
+
+        for root, subfolder, files in os.walk(settings.local_path):
             for filename in files:
 
                 extension = get_file_extension(filename)
                 _file = root + '/' + filename
 
                 # check if it is archive
-                if filename in EXCLUDED_FILES or extension in EXCLUDED_FILES:
+                if filename in excluded_files or extension in excluded_files:
                     # remove unnecessary files
-                    if REMOVE_FLAG:
+                    if settings.remove:
                         _file = root + '/' + filename
                         remove_file(_file)
 
@@ -202,7 +203,7 @@ def folder_reader(path):
                     archive = root + '/' + filename
                     extract_path = get_unique_extract_path()
                     extract_archive(archive, extract_path)
-                    folder_reader(extract_path)
+                    folder_reader(extract_path, queue)
 
                 elif extension == '' and ('.git/objects/' in _file):
                     try:
@@ -258,13 +259,16 @@ def extract_archive(archive_file, path):
         archive.extractall(path=path)
 
 
-def start_the_hunt():
-    if os.path.isfile(PATH):
-        file_reader(PATH)
+def start_the_hunt(settings):
+    queue = multiprocessing.Manager().Queue()
+    result = multiprocessing.Manager().Queue()
+
+    if os.path.isfile(settings.local_path):
+        file_reader(queue, settings)
     else:
-        folder_reader(PATH)
-    mp_handler()
-    save_output()
+        folder_reader(queue, settings)
+    mp_handler(queue, result, settings)
+    save_output(result, settings)
 
 
 def shannon_entropy(data):
@@ -304,33 +308,35 @@ def git_object_reader(_file):
         logger.error(e)
 
 
-def save_output():
+def save_output(result, settings):
     try:
         data = []
 
         while not result.empty():
             data.append(result.get())
-
-        with open(OUTFILE, 'w') as f:
+            
+        with open(settings.outfile, 'w') as f:
             json.dump(data, f)
 
     except Exception as e:
-        logger.error("while trying to write to " + str(OUTFILE) + " file. Details:\n" + str(e))
+        logger.error("while trying to write to " + str(settings.outfile) + " file. Details:\n" + str(e))
 
 
-def password_search(line):
+def password_search(line, settings):
     try:
         potential_pass_list = re.findall(PASSWORD_REGEX, line)
         pass_list = []
+        min_pass = settings.min_pass if settings.min_pass else MIN_PASS_LENGTH
+        max_pass = settings.max_pass if settings.max_pass else MAX_PASS_LENGTH
+        password_complexity_edge = settings.password_complexity if settings.password_complexity else PASSWORD_COMPLEXITY
 
         for string in potential_pass_list:
-            if (not MIN_PASS_LENGTH <= len(string) <= MAX_PASS_LENGTH) or \
-                any(ch.isspace() for ch in string):
+            if (not min_pass <= len(string) <= max_pass) or any(ch.isspace() for ch in string):
                 continue
 
             password_complexity = passwordmeter.test(string)[0]
 
-            if password_complexity < PASSWORD_COMPLEXITY * 0.1:
+            if password_complexity < password_complexity_edge * 0.1:
                 continue
 
             yield (string, password_complexity)
@@ -360,13 +366,12 @@ def digit_verifier(word):
 def order_verifier(word):
     return 'abcdefgh' not in word.lower()
 
-def bad_expression_verifier(_file):
+def bad_expression_verifier(_file, bad_expressions):
     try:
-
         with open(_file, 'rb', 0) as f, \
         mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as string_object:
 
-            for search_expression in BAD_EXPRESSIONS:
+            for search_expression in bad_expressions:
 
                 if string_object.find(search_expression.encode()) != -1:
                     return True          
