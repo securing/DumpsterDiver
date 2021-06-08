@@ -54,8 +54,21 @@ if __name__ == '__main__':
         help="when this flag is set, then all files will be additionally "
              + "analyzed in search of hardcoded passwords.")    
     basic.add_argument('-o', dest='outfile', default='results.json', 
-        help="output file in JSON format.")   
+        help="output file in JSON format.") 
+    basic.add_argument('-x', '--regexlist', action='store_true', 
+        help="when this flag is set, then all files will be additionally "
+             + "analyzed in search regular expression list from file. If --regex-file is not specified, regex.yaml will be chosen by default.")    
+    basic.add_argument('-c', '--singleregex', action='store_true', 
+        help="when this flag is set, then all files will be additionally "
+             + "analyzed in search for particular regular expression. Intended to use with --regex.") 
+    basic.add_argument('-n', '--noentropysearch', action='store_false', 
+        help="when this flag is set, then DumpsterDiver won't look for "
+             + "high entropy strings.") 
 
+    configuration.add_argument('--regex-file', dest='regex_list', type=str, 
+        help="specifies regex list file.")
+    configuration.add_argument('--regex', dest='single_regex', type=str, 
+        help="specifies particular regex.")
     configuration.add_argument('--min-key', dest='min_key', type=int, 
         help="specifies the minimum key length to be analyzed (default is 20).")
     configuration.add_argument('--max-key', dest='max_key', action='store', 

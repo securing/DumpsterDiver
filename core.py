@@ -34,6 +34,9 @@ PASSWORD_COMPLEXITY = CONFIG['password_complexity']
 BAD_EXPRESSIONS = CONFIG['bad_expressions']
 
 PASSWORD_REGEX = re.compile(r"['\">](.*?)['\"<]")
+REGEXP_LIST = CONFIG['regex_list']
+SINGLE_REGEX = CONFIG['single_regex']
+NOENTROPYSEARCH = True
 
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -69,6 +72,64 @@ def analyze_file(_file, result, settings):
         min_key = settings.min_key if settings.min_key else MIN_KEY_LENGTH
         max_key = settings.max_key if settings.max_key else MAX_KEY_LENGTH
         entropy = settings.entropy if settings.entropy else HIGH_ENTROPY_EDGE
+        regexlist = settings.regex_list if settings.regex_list else REGEXP_LIST
+        singleregex = settings.single_regex if settings.single_regex else SINGLE_REGEX
+
+        if settings.regexlist:
+            # have to read line by line instead of words
+            try:
+                file = open(f'{_file}')
+                lines = file.readlines()
+                foundings = []
+                found = 0    
+                file = yaml.safe_load(open(f'{regexlist}'))
+                regexArray = file.get("signatures")
+                for _key in lines:
+                    for _finding in regexArray:
+                        if any('regex' in _key for _key in _finding):
+                            regex = f"{_finding['regex']}"               
+                            pattern = re.compile(regex)
+                            found = pattern.findall(_key)
+                            if (found == ['']):
+                                print(f'Possibe match: {colored(_finding["name"], "cyan")}')
+                                print(f'File: {colored(_file, "green")}')
+                                print(f'Key: {colored(_key, "magenta")}')
+                                foundings.append(f'Possibly matched: {colored(_finding["name"], "cyan")} with key: {colored(_key, "magenta")}')
+                                data = {"Finding" : f'{_finding["name"]}',  'Key': f'{_key}', 'File':f'{_file}'}
+                                result.put(data)          
+                            if (found != [] and found != ['']) :
+                                i = len(found);
+                                for var in list(range(i)):
+                                    print(f'Possibe match: {colored(_finding["name"], "cyan")}')
+                                    print(f'File: {colored(_file, "green")}')
+                                    print(f'Key: {colored(found[var] + "", "magenta")}\n')
+                                    foundings.append(f'Possibly matched: {colored(_finding["name"], "cyan")} with key: {colored(_key, "magenta")}')
+                                    data = {"Finding" : f'{_finding["name"]}',  'Key': f'{found[var]}', 'File':f'{_file}'}
+                                    result.put(data)
+                                       
+            except Exception as e:
+                logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
+
+        if settings.singleregex:
+            #Single regex availible now, multiple inline regexes will be addressed in future updates
+            try:
+                file = open(f'{_file}')
+                lines = file.readlines()
+                # foundings = []
+                found = 0
+                with open(_file) as f:
+                    for _key in lines:
+                        pattern = re.compile(singleregex)
+                        found = pattern.findall(_key)                                
+                        if found:
+                            i = len(found);
+                            for var in list(range(i)):
+                                print(f'File: {colored(_file, "green")}')
+                                print(f'Key: {colored(found[var], "magenta")}')
+                                data = {'Key': f'{found[var]}', 'File':f'{_file}'}
+                                result.put(data)
+            except Exception as e:
+                logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
 
         if settings.advance:
             additional_checks = advancedSearch.AdvancedSearch()
@@ -89,9 +150,10 @@ def analyze_file(_file, result, settings):
                                     "grep_words_weight": additional_checks._GREP_WORDS_WEIGHT}}
                 result.put(data)
         
-        for word in get_base64_strings_from_file(_file, min_key, max_key):
-            if found_high_entropy(_file, word, result, entropy):
-                entropy_found = True
+        if settings.noentropysearch != False:
+            for word in get_base64_strings_from_file(_file, min_key, max_key):
+                if found_high_entropy(_file, word, result, entropy):
+                    entropy_found = True
 
         if settings.secret:
             # have to read line by line instead of words

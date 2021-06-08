@@ -25,13 +25,15 @@ The main idea of this tool is to detect any potential secret leaks. You can watc
 ### Usage
 
 ```
-usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-o OUTFILE]
+usage: DumpsterDiver.py [-h] -p LOCAL_PATH [-r] [-a] [-s] [-x] [-c] [-n] [-o OUTFILE]
                         [--min-key MIN_KEY] [--max-key MAX_KEY]
                         [--entropy ENTROPY] [--min-pass MIN_PASS]
                         [--max-pass MAX_PASS]
                         [--pass-complex {1,2,3,4,5,6,7,8,9}]
                         [--exclude-files EXCLUDE_FILES [EXCLUDE_FILES ...]]
                         [--bad-expressions BAD_EXPRESSIONS [BAD_EXPRESSIONS ...]]
+                        [--regex-file]
+                        [--regex]
 ```
 
 
@@ -142,6 +144,20 @@ grep_word_occurrence: 1
 
 Note that the rule will be triggered only when the total weight (`filetype_weight + grep_words_weight`) is `>=10`.
 
+### Use Regular Expressions to search through files
+The DumpsterDiver gives you ability to look through locally stored files and check for pre-defined or user-defined regular expressions.
+
+Searching with regex list without entropy search:
+```
+DumpsterDiver.py -p ./path -x --regex-file regex.yaml -n
+```
+
+Searchin with keyboard typed regex without entropy search:
+```
+DumpsterDiver.py -p ./path -c --regex ".*" -n
+```
+
+
 ### Using Docker
 A docker image is available for DumpsterDiver. Run it using:
 ```
@@ -151,6 +167,9 @@ If you want to override one of the configuration files (`config.yaml` or `rules.
 ```
 $> docker run -v /path/to/my/config/config.yaml:/config.yaml /path/to/my/config/rules.yaml:/rules.yaml -v /path/to/my/files:/files --rm rzepsky/dumpsterdiver -p /files
 ```
+
+### List of regexes
+List of regexes taken from [shhgit](https://github.com/eth0izzle/shhgit)
 
 ### Contribution
 
