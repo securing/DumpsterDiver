@@ -242,21 +242,25 @@ def remove_file(_file):
 
 
 def extract_archive(archive_file, path):
-    if archive_file.endswith('.zip'):
-        opener, mode = zipfile.ZipFile, 'r'
+    try:
+        if archive_file.endswith('.zip'):
+            opener, mode = zipfile.ZipFile, 'r'
 
-    elif archive_file.endswith('.tar.gz') or archive_file.endswith('.tgz'):
-        opener, mode = tarfile.open, 'r:gz'
+        elif archive_file.endswith('.tar.gz') or archive_file.endswith('.tgz'):
+            opener, mode = tarfile.open, 'r:gz'
 
-    elif archive_file.endswith('.tar.bz2') or archive_file.endswith('.tbz'):
-        opener, mode = tarfile.open, 'r:bz2'
+        elif archive_file.endswith('.tar.bz2') or archive_file.endswith('.tbz'):
+            opener, mode = tarfile.open, 'r:bz2'
 
-    else:
-        logger.info("Extracting archive " + archive_file + " is not supported.")
-        return
+        else:
+            logger.info("Extracting archive " + archive_file + " is not supported.")
+            return
 
-    with opener(archive_file, mode) as archive:
-        archive.extractall(path=path)
+        with opener(archive_file, mode) as archive:
+            archive.extractall(path=path)
+
+    except Exception as e:
+        logger.error(e)
 
 
 def start_the_hunt(settings):
