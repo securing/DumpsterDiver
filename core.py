@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import advancedSearch
-import fnmatch
 import json
 import logging
 import math
@@ -19,11 +18,11 @@ from termcolor import colored
 
 CONFIG = yaml.safe_load(open('config.yaml'))
 BASE64_CHARS = CONFIG['base64_chars']
-#PATH = './'
-#OUTFILE = ''
+# PATH = './'
+# OUTFILE = ''
 ARCHIVE_TYPES = CONFIG['archive_types']
 EXCLUDED_FILES = CONFIG['excluded_files']
-#REMOVE_FLAG = False
+# REMOVE_FLAG = False
 LOGFILE = CONFIG['logfile']
 MIN_KEY_LENGTH = CONFIG['min_key_length']
 MAX_KEY_LENGTH = CONFIG['max_key_length']
@@ -38,6 +37,7 @@ PASSWORD_REGEX = re.compile(r"['\">](.*?)['\"<]")
 logging.basicConfig(filename=LOGFILE, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
+
 
 def mp_handler(queue, result, settings):
     # depending on your hardware the DumpsterDiver will use all available cores for
@@ -61,11 +61,11 @@ def analyze_file(_file, result, settings):
         if bad_expressions:
             if bad_expression_verifier(_file, bad_expressions):
                 logger.info("Bad expression has been found in a " + _file 
-                    + " file. Skipping further analysis.")
+                            + " file. Skipping further analysis.")
                 return
 
         entropy_found = False
-        rule_triggerred = False
+        rule_triggered = False
         min_key = settings.min_key if settings.min_key else MIN_KEY_LENGTH
         max_key = settings.max_key if settings.max_key else MAX_KEY_LENGTH
         entropy = settings.entropy if settings.entropy else HIGH_ENTROPY_EDGE
@@ -81,7 +81,7 @@ def analyze_file(_file, result, settings):
                         entropy_found = True
 
             if additional_checks.final(_file):
-                data = {"Finding": "Advanced rule triggerred", "File": _file,
+                data = {"Finding": "Advanced rule triggered", "File": _file,
                         "Details": {"filetype": additional_checks._FILETYPE,
                                     "filetype_weight": additional_checks._FILETYPE_WEIGHT,
                                     "grep_words": additional_checks._GREP_WORDS,
@@ -102,7 +102,7 @@ def analyze_file(_file, result, settings):
                         for password in password_search(line, settings):
                             print(colored("FOUND POTENTIAL PASSWORD!!!", 'yellow'))
                             print(colored("Potential password ", 'yellow') + colored(password[0], 'magenta')
-                                    + colored(" has been found in file " + _file, 'yellow'))
+                                  + colored(" has been found in file " + _file, 'yellow'))
                             data = {"Finding": "Password",
                                     "File": _file,
                                     "Details": {"Password complexity": password[1],
@@ -113,7 +113,7 @@ def analyze_file(_file, result, settings):
             except Exception as e:
                 logger.error("while trying to open " + str(_file) + ". Details:\n" + str(e))
 
-        if settings.remove and not (entropy_found or rule_triggerred):
+        if settings.remove and not (entropy_found or rule_triggered):
             remove_file(_file)
 
     except Exception as e:
@@ -291,7 +291,7 @@ def shannon_entropy(data):
             if p_x > 0:
                 entropy += - p_x * math.log(p_x, 2)
 
-        return entropy
+        return round(entropy, 5)
 
     except Exception as e:
         logger.error(e)
@@ -329,7 +329,6 @@ def save_output(result, settings):
 def password_search(line, settings):
     try:
         potential_pass_list = re.findall(PASSWORD_REGEX, line)
-        pass_list = []
         min_pass = settings.min_pass if settings.min_pass else MIN_PASS_LENGTH
         max_pass = settings.max_pass if settings.max_pass else MAX_PASS_LENGTH
         password_complexity_edge = settings.password_complexity if settings.password_complexity else PASSWORD_COMPLEXITY
@@ -338,12 +337,12 @@ def password_search(line, settings):
             if (not min_pass <= len(string) <= max_pass) or any(ch.isspace() for ch in string):
                 continue
 
-            password_complexity = passwordmeter.test(string)[0]
+            password_complexity = round(passwordmeter.test(string)[0], 3)
 
             if password_complexity < password_complexity_edge * 0.1:
                 continue
 
-            yield (string, password_complexity)
+            yield string, password_complexity
 
     except Exception as e:
         logger.error(e)
@@ -369,6 +368,7 @@ def digit_verifier(word):
 
 def order_verifier(word):
     return 'abcdefgh' not in word.lower()
+
 
 def bad_expression_verifier(_file, bad_expressions):
     try:

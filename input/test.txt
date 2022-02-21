@@ -1,0 +1,15 @@
+{
+    "aws_auth": {
+        "aws_access_key_id": "AKIAJIS5NP79GW2AYZHA",
+        "aws_secret_access_key": "lxRV/uiC4kmZQryIZxSSlQ6xNlZMjo4kn+LnjNiF"
+    },
+    "azure_auth": {
+        "account": "foobar",
+        "key": "M3mmbjOlIZr11OZoULqUWyFA1EpOdZAEcmaC64E/Ft9MRfDEYE7qDJm+9ezGQY15==",
+        "container": "assets"
+    },
+    "mail_auth": {
+     "login": "john.doe@evilcorp.com",
+     "password": "M5UWx/N-yjuZ"
+    }
+}
