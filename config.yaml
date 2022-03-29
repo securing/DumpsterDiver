@@ -14,3 +14,5 @@ high_entropy_edge: 4.3
 min_pass_length: 8
 max_pass_length: 12
 password_complexity: 8
+regex_list: './regex.yaml'
+single_regex: ''
