@@ -45,6 +45,7 @@ def mp_handler(queue, result, settings):
 
     p = multiprocessing.Pool(multiprocessing.cpu_count())
     while queue.qsize():
+        time.sleep(1)
         p.apply_async(worker, (queue,result,settings))
     queue.join()
 
